@@ -37,3 +37,10 @@ check:
 # Ejecutar hooks sobre todo el repositorio
 hooks:
     uv run pre-commit run --all-files
+
+# Sincronizar main con el repositorio del profesor
+sync-upstream:
+    git fetch upstream
+    git switch main
+    git merge --ff-only upstream/main
+    git push origin main
