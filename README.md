@@ -1,115 +1,442 @@
-# Agente Operador
+# Agente Operador — Bootcamp AI Engineer
 
-Proyecto integrador del **Bootcamp AI Engineer con Python — 2ª Edición: Agentes de IA en Producción** (Código Facilito).
+Implementación personal del proyecto integrador del **Bootcamp AI Engineer con Python — 2ª Edición: Agentes de IA en Producción**, impartido por [Código Facilito](https://codigofacilito.com/).
 
-El Agente Operador es un asistente para el equipo de operaciones de una empresa mediana: lee tickets (fallas, solicitudes, proveedores, facturación), los resume, los clasifica y, con el avance del bootcamp, actúa sobre ellos con herramientas, conocimiento interno y controles de producción.
+Este repositorio es un fork del proyecto original desarrollado por [Ramses Camas](https://github.com/RamsesCamas/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen).
 
-En la Clase 1 construimos el **núcleo** (`core/`): un cliente LLM que habla con varios proveedores mediante el patrón adaptador, con reintentos, fallback, costo por llamada y logging estructurado.
+El objetivo de esta implementación es desarrollar progresivamente las actividades del bootcamp, aplicando buenas prácticas de ingeniería de software, automatización, calidad de código y control de versiones.
 
-## Qué se construye en cada bloque
+> **Nota:** Esta es una implementación personal e independiente. Las soluciones de las actividades pueden diferir de las propuestas por el instructor.
 
-| Bloque | Clases | Qué agrega al Agente Operador |
+## Sobre el proyecto
+
+**Agente Operador** es un asistente de inteligencia artificial diseñado para apoyar al equipo de operaciones de una empresa.
+
+El sistema evoluciona progresivamente durante el bootcamp, incorporando capacidades para:
+
+- Interactuar con diferentes proveedores de modelos de lenguaje (LLMs).
+- Procesar, resumir y clasificar tickets operativos.
+- Gestionar prompts y contexto.
+- Ejecutar herramientas y acciones.
+- Consultar información mediante RAG.
+- Implementar mecanismos de evaluación, observabilidad y control de costos.
+
+### Contenido del bootcamp
+
+| Bloque | Clases | Contenido |
 |---|---|---|
-| Fundamentos | 1–3 | Cliente LLM multi-proveedor, prompting, manejo de contexto y contratos de salida |
-| Agentes | 4–5 | Ciclo de agente con herramientas para actuar sobre los tickets |
-| Conocimiento | 6–9 | Búsqueda sobre documentación interna (RAG) y memoria |
-| Orquestación | 10–11 | Flujos de varios pasos y coordinación entre agentes |
-| Evaluación | 12–13 | Conjuntos de prueba y métricas de calidad |
+| Fundamentos | 1–3 | Cliente LLM multi-proveedor, prompting, contexto y salidas estructuradas |
+| Agentes | 4–5 | Agentes con herramientas |
+| Conocimiento | 6–9 | RAG y memoria |
+| Orquestación | 10–11 | Flujos de múltiples pasos y coordinación de agentes |
+| Evaluación | 12–13 | Evaluación y métricas de calidad |
 | Producción | 14–17 | Streaming, observabilidad, costos y despliegue |
 
-## Requisitos e instalación
+## Entorno de desarrollo
 
-- Python 3.11 o superior
-- [uv](https://docs.astral.sh/uv/)
+Esta implementación incorpora un entorno reproducible basado en **Docker y Visual Studio Code Dev Containers**, con el objetivo de mantener aisladas las dependencias y herramientas del proyecto.
+
+### Tecnologías y herramientas
+
+| Herramienta | Propósito |
+|---|---|
+| Python 3.11 | Lenguaje y versión base del entorno |
+| Docker | Aislamiento del entorno de desarrollo |
+| Dev Containers | Integración del entorno Docker con VS Code |
+| uv | Gestión de dependencias y entornos virtuales |
+| Just | Automatización de comandos de desarrollo |
+| Ruff | Linting y formateo |
+| Pytest | Pruebas automatizadas |
+| pre-commit | Validaciones previas a los commits |
+| GitHub Actions | Integración continua |
+
+### Requisitos
+
+Para trabajar utilizando el Dev Container necesitas:
+
+- [Docker](https://docs.docker.com/get-docker/)
+- [Visual Studio Code](https://code.visualstudio.com/)
+- [Dev Containers Extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+
+No es necesario instalar Python ni las dependencias del proyecto directamente en el sistema anfitrión.
+
+### Instalación con Dev Containers
+
+**1. Clonar el repositorio**
 
 ```bash
-uv sync
+git clone https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen.git
+
+cd Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen
+```
+
+**2. Abrir el proyecto en VS Code**
+
+```bash
+code .
+```
+
+**3. Iniciar el Dev Container**
+
+Desde la paleta de comandos de VS Code (`Ctrl+Shift+P`), ejecutar:
+
+```text
+Dev Containers: Reopen in Container
+```
+
+VS Code construirá el contenedor utilizando la configuración de `.devcontainer/`.
+
+Durante la creación del contenedor se ejecuta automáticamente:
+
+```bash
+just setup
+```
+
+Esta receta sincroniza las dependencias del proyecto mediante `uv` e instala los hooks de pre-commit.
+
+### Instalación sin Dev Container
+
+Como alternativa, puedes trabajar directamente en tu sistema si tienes instalados:
+
+- Python 3.11 o superior
+- uv
+- just
+
+Ejecuta:
+
+```bash
+just setup
+```
+
+## Variables de entorno
+
+Crea tu archivo de configuración local a partir del ejemplo:
+
+```bash
 cp .env.example .env
 ```
 
-Llena tu `.env` con las llaves:
+Configura las API keys correspondientes a los proveedores que utilizarás.
 
-| Variable | Dónde obtenerla |
+| Variable | Proveedor |
 |---|---|
-| `GEMINI_API_KEY` | Google AI Studio: <https://aistudio.google.com/apikey> (tiene free tier) |
-| `GROQ_API_KEY` | Groq Console: <https://console.groq.com/keys> (tiene free tier) |
-| — | Ollama corre local y no necesita llave: <https://ollama.com/download>, luego `ollama pull llama3.2` |
+| `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/apikey) |
+| `GROQ_API_KEY` | [Groq Console](https://console.groq.com/keys) |
 
-Si falta la llave de algún proveedor que está en `PRIMARY` o `FALLBACKS`, el programa falla al arrancar y te dice qué variable agregar.
+El proyecto también contempla el uso de [Ollama](https://ollama.com/), que permite ejecutar modelos localmente sin API key.
 
-## Cómo correr
+Si Ollama se ejecuta fuera del Dev Container, puede ser necesario ajustar su dirección de conexión.
+
+> **Seguridad:** Nunca incluyas credenciales ni archivos `.env` en commits. El archivo `.env` está excluido mediante `.gitignore`.
+
+## Automatización con Just
+
+El proyecto utiliza un `Justfile` para centralizar los comandos habituales de desarrollo.
+
+Para consultar todas las recetas disponibles:
 
 ```bash
-# Pregunta al LLM (usa PRIMARY y, si falla, FALLBACKS)
-uv run main.py "Resume este ticket: el portal de proveedores no carga desde las 9:00"
-
-# Demo de la clase: solo Gemini, sin fallbacks, con el ticket T-1043.
-# Funciona aunque GroqProvider siga con su TODO.
-uv run main.py --demo
-
-# Fuerza un proveedor (sin fallbacks)
-uv run main.py --provider ollama "hola"
-
-# Tests (no usan red)
-uv run pytest -q
-
-# Calidad de código
-uv run ruff check .
-uv run ruff format --check .
-
-# Reporte de las llamadas registradas en logs/llm_calls.jsonl
-uv run scripts/report.py
+just --list
 ```
 
-Cada llamada imprime la respuesta y una línea gris con `proveedor · modelo · tokens in/out · latencia · costo`, y agrega una línea JSON por intento a `logs/llm_calls.jsonl`.
+### Comandos disponibles
 
-Los tickets de ejemplo están en `data/tickets_ejemplo.jsonl`.
+| Comando | Descripción |
+|---|---|
+| `just setup` | Sincroniza dependencias e instala pre-commit |
+| `just run` | Ejecuta la aplicación |
+| `just lint` | Ejecuta las verificaciones de Ruff |
+| `just format` | Formatea el código |
+| `just format-check` | Comprueba el formato sin modificar archivos |
+| `just test` | Ejecuta las pruebas con Pytest |
+| `just check` | Ejecuta lint, format-check y tests |
+| `just hooks` | Ejecuta todos los hooks de pre-commit |
+| `just sync-upstream` | Sincroniza `main` con el repositorio original |
 
-## Arquitectura de `core/`
+### Ejemplos de ejecución
+
+Ejecutar la aplicación:
+
+```bash
+just run --demo
+```
+
+Ejecutar con un proveedor específico:
+
+```bash
+just run --provider ollama "Hola"
+```
+
+Ejecutar todas las verificaciones de calidad:
+
+```bash
+just check
+```
+
+## Calidad de código
+
+Esta implementación incorpora herramientas para mantener la consistencia y calidad del código.
+
+### Ruff
+
+Se utiliza para realizar análisis estático y formateo de código Python.
+
+```bash
+just lint
+just format-check
+```
+
+Para aplicar automáticamente el formato:
+
+```bash
+just format
+```
+
+### Pytest
+
+Las pruebas automatizadas se ejecutan mediante:
+
+```bash
+just test
+```
+
+Las pruebas unitarias deben poder ejecutarse sin depender de credenciales ni de llamadas reales a servicios externos.
+
+### Pre-commit
+
+Se utilizan hooks para ejecutar verificaciones antes de registrar un commit.
+
+Los hooks configurados incluyen:
+
+- Ruff lint.
+- Ruff format check.
+- Detección de espacios en blanco problemáticos.
+
+Para ejecutar manualmente todos los hooks:
+
+```bash
+just hooks
+```
+
+### GitHub Actions
+
+El repositorio incorpora un workflow de integración continua definido en:
+
+```text
+.github/workflows/ci.yml
+```
+
+Este workflow se ejecuta al crear o actualizar un Pull Request dirigido a `develop`.
+
+Las verificaciones incluyen:
+
+1. Instalación de dependencias.
+2. Análisis estático con Ruff.
+3. Comprobación de formato.
+4. Ejecución de pruebas automatizadas.
+
+El workflow utiliza:
+
+```bash
+just check
+```
+
+De esta manera, las verificaciones ejecutadas localmente son las mismas que se utilizan en CI.
+
+Actualmente, el workflow no construye la imagen del Dev Container ni ejecuta pruebas de integración con proveedores LLM externos.
+
+## Estrategia de versionamiento
+
+Este fork utiliza un workflow de desarrollo independiente del repositorio original.
+
+El objetivo es mantener una implementación personal acumulativa, conservando el historial de cada actividad y permitiendo consultar los cambios publicados por el instructor.
+
+### Organización de ramas
+
+| Rama | Propósito |
+|---|---|
+| `main` | Referencia sincronizada con el repositorio del instructor |
+| `develop` | Rama principal de la implementación personal |
+| `feat/class-XX` | Desarrollo de las actividades de cada clase |
+| `chore/*` | Infraestructura, configuración y mantenimiento |
+
+La rama `develop` concentra el trabajo acumulativo de las actividades.
+
+La rama `main` no se utiliza para desarrollar soluciones personales.
+
+### Workflow de desarrollo
+
+Cada actividad sigue el siguiente proceso:
+
+**1. Crear una rama desde `develop`**
+
+```bash
+git switch develop
+git pull --ff-only origin develop
+
+git switch -c feat/class-XX
+```
+
+**2. Implementar y validar los cambios**
+
+```bash
+just check
+just hooks
+```
+
+**3. Registrar y publicar los cambios**
+
+```bash
+git add .
+git commit -m "feat: implement class XX activity"
+
+git push -u origin feat/class-XX
+```
+
+**4. Crear un Pull Request**
+
+Se abre un Pull Request desde `feat/class-XX` hacia `develop` en este fork.
+
+El PR debe superar las verificaciones automáticas de GitHub Actions antes de integrarse.
+
+**5. Integrar los cambios**
+
+Una vez completadas las verificaciones, se utiliza un merge commit para conservar el historial de desarrollo.
+
+**6. Actualizar `develop` local**
+
+```bash
+git switch develop
+git pull --ff-only origin develop
+```
+
+### Versionamiento de actividades
+
+Cada actividad completada se identifica mediante un **tag anotado**, utilizando la convención:
+
+```text
+class-XX
+```
+
+Por ejemplo:
+
+```text
+class-01
+class-02
+class-03
+```
+
+Después de fusionar el Pull Request de una actividad y actualizar `develop`, se crea el tag correspondiente:
+
+```bash
+git switch develop
+git pull --ff-only origin develop
+
+git tag -a class-01 -m "Class 01 completed"
+
+git push origin class-01
+```
+
+Los tags apuntan al commit integrado en `develop`, representando el estado completo del proyecto al finalizar cada clase.
+
+Esto permite:
+
+- Recuperar versiones específicas del proyecto.
+- Comparar el progreso entre clases.
+- Relacionar cada hito con su Pull Request.
+- Conservar un historial de aprendizaje independiente del instructor.
+
+Los tags `class-XX` representan hitos académicos. Las versiones de software publicadas podrán utilizar posteriormente una convención como `v1.0.0`, siguiendo Semantic Versioning.
+
+### Sincronización con el repositorio original
+
+El repositorio del instructor se configura como remoto `upstream`:
+
+```bash
+git remote add upstream https://github.com/RamsesCamas/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen.git
+```
+
+Para sincronizar `main`:
+
+```bash
+just sync-upstream
+```
+
+Esta receta ejecuta:
+
+```bash
+git fetch upstream
+git switch main
+git merge --ff-only upstream/main
+git push origin main
+```
+
+La sincronización debe realizarse con el árbol de trabajo limpio.
+
+Los cambios del instructor **no se fusionan automáticamente en `develop`**.
+
+Las nuevas funcionalidades, correcciones o componentes necesarios se revisan e incorporan deliberadamente para evitar mezclar las soluciones del instructor con las implementaciones personales.
+
+## Arquitectura inicial
+
+El proyecto comienza con un cliente LLM capaz de interactuar con múltiples proveedores mediante una abstracción común.
 
 ```mermaid
-flowchart LR
-    main["main.py (CLI)"] --> client["LLMClient<br/>reintentos + fallback"]
-    client --> gemini["GeminiProvider"]
-    client --> groq["GroqProvider"]
-    client --> ollama["OllamaProvider"]
-    gemini & groq & ollama --> base["OpenAICompatibleProvider<br/>httpx → /chat/completions"]
-    client --> logger["CallLogger"]
-    logger --> jsonl[("logs/llm_calls.jsonl")]
-    base -.-> pricing["pricing.cost_usd"]
-    config["config.Settings (.env)"] -.-> client
+flowchart TD
+    CLI["main.py — CLI"]
+    CLIENT["LLMClient"]
+    PROVIDERS["Provider Protocol"]
+    GEMINI["GeminiProvider"]
+    GROQ["GroqProvider"]
+    OLLAMA["OllamaProvider"]
+    LOGGER["CallLogger"]
+    LOGS["logs/llm_calls.jsonl"]
+    CONFIG["Settings / .env"]
+
+    CLI --> CLIENT
+    CONFIG --> CLIENT
+    CLIENT --> PROVIDERS
+    PROVIDERS --> GEMINI
+    PROVIDERS --> GROQ
+    PROVIDERS --> OLLAMA
+    CLIENT --> LOGGER
+    LOGGER --> LOGS
 ```
 
-| Archivo | Responsabilidad |
+### Componentes principales
+
+| Componente | Responsabilidad |
 |---|---|
-| `core/config.py` | `Settings` leída de `.env`; valida llaves al arrancar |
-| `core/errors.py` | Errores transitorios (se reintentan) y permanentes (fallback directo) |
-| `core/providers.py` | `Provider` (Protocol), adaptador base compatible con OpenAI y uno por proveedor |
-| `core/llm_client.py` | `LLMResponse` y `LLMClient`: backoff 1 s → 2 s → 4 s + jitter, fallback en orden |
-| `core/logger.py` | Una línea JSON por intento, sin llaves ni texto del prompt |
-| `core/pricing.py` | Precio por millón de tokens y costo por llamada |
+| `core/config.py` | Configuración de proveedores y variables de entorno |
+| `core/errors.py` | Manejo de errores transitorios y permanentes |
+| `core/providers.py` | Abstracción e implementaciones de proveedores LLM |
+| `core/llm_client.py` | Cliente LLM, reintentos y fallback |
+| `core/logger.py` | Registro estructurado de llamadas |
+| `core/pricing.py` | Estimación de costos de uso |
+| `main.py` | Interfaz de línea de comandos |
 
-## Práctica de la Clase 1
+Esta arquitectura evolucionará progresivamente con las actividades del bootcamp.
 
-| Paso | Tiempo | Qué hacer |
+## Actividades del bootcamp
+
+Las actividades se desarrollan de manera acumulativa.
+
+Cada implementación parte de las funcionalidades desarrolladas anteriormente, permitiendo construir progresivamente una versión personal del Agente Operador.
+
+Cada clase tiene dos referencias principales:
+
+| Referencia | Ejemplo | Propósito |
 |---|---|---|
-| 1 | 5 min | Clona el repo y corre `uv sync` |
-| 2 | 5 min | Copia `.env.example` a `.env` y agrega tus llaves |
-| 3 | 15 min | Implementa `GroqProvider` en `core/providers.py` (busca `TODO(clase-1)`). Prueba con `uv run main.py --provider groq "hola"` |
-| 4 | 5 min | Fuerza el fallback: `GEMINI_API_KEY=invalida uv run main.py "hola"`. Revisa en `logs/llm_calls.jsonl` el intento fallido y el `fallback: true` |
-| 5 | 20 min | Completa `scripts/report.py`: costo total, latencia p50/p95, % de fallback y llamadas por proveedor |
-| Bonus | — | Agrega `--temperature` (0–2) a `main.py` y pásalo al proveedor |
+| Rama de desarrollo | `feat/class-01` | Implementar y revisar la actividad |
+| Tag de finalización | `class-01` | Identificar el estado integrado de la clase |
 
-## Ver la solución
+El historial de Pull Requests y los tags permiten consultar la evolución del proyecto y las decisiones técnicas adoptadas durante el aprendizaje.
 
-```bash
-git switch solucion/clase-1
-```
+## Créditos
 
-Para volver al inicio: `git switch main` (o `git checkout clase-1-inicio`).
+Proyecto académico original desarrollado por **Ramses Camas** para el **Bootcamp AI Engineer con Python — 2ª Edición**, de Código Facilito.
 
-## Avisos
+- [Repositorio original](https://github.com/RamsesCamas/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen)
+- [Fork e implementación personal](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen)
 
-- Gemini se consume con su [endpoint oficial compatible con OpenAI](https://ai.google.dev/gemini-api/docs/openai), que Google marca como **beta**. Desde junio de 2026 Google recomienda su API nativa, la [Interactions API](https://ai.google.dev/gemini-api/docs/interactions-overview), para proyectos nuevos. Aquí usamos la compatible con OpenAI para que Gemini, Groq y Ollama compartan un mismo adaptador base. Cambiar a la API nativa solo requiere otro adaptador en `core/providers.py`; el resto del código no se toca.
-- Los precios en `core/pricing.py` son **ilustrativos**. Revisa la tabla vigente de cada proveedor antes de tomar decisiones con ellos.
-- **Nunca subas tu `.env`** al repositorio. Ya está en `.gitignore`; si alguna vez lo subes por error, rota tus llaves.
+Esta implementación incorpora configuraciones propias de desarrollo, automatización, integración continua y soluciones independientes de las actividades académicas.
