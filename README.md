@@ -94,6 +94,16 @@ just setup
 
 Esta receta sincroniza las dependencias del proyecto mediante `uv` e instala los hooks de pre-commit.
 
+### Permisos del entorno
+
+El Dev Container utiliza un usuario no privilegiado (`vscode`) en lugar de ejecutar las herramientas como `root`.
+
+En Ubuntu, el UID/GID del usuario del contenedor se ajusta para coincidir con el usuario del sistema anfitrión.
+
+Esto permite crear y modificar archivos desde ambos entornos sin generar conflictos de propiedad.
+
+Las herramientas de desarrollo, incluyendo `uv`, `just` y Git, pueden utilizarse directamente desde el contenedor sin privilegios administrativos.
+
 ### Instalación sin Dev Container
 
 Como alternativa, puedes trabajar directamente en tu sistema si tienes instalados:
@@ -143,15 +153,17 @@ just --list
 
 | Comando | Descripción |
 |---|---|
-| `just setup` | Sincroniza dependencias e instala pre-commit |
-| `just run` | Ejecuta la aplicación |
-| `just lint` | Ejecuta las verificaciones de Ruff |
-| `just format` | Formatea el código |
-| `just format-check` | Comprueba el formato sin modificar archivos |
-| `just test` | Ejecuta las pruebas con Pytest |
-| `just check` | Ejecuta lint, format-check y tests |
-| `just hooks` | Ejecuta todos los hooks de pre-commit |
-| `just sync-upstream` | Sincroniza `main` con el repositorio original |
+| `just setup` | Sincroniza dependencias mediante `uv` e instala los hooks de pre-commit. |
+| `just run` | Ejecuta la aplicación. Admite argumentos adicionales. |
+| `just lint` | Analiza el código con Ruff sin modificar archivos. |
+| `just lint-fix` | Corrige automáticamente los problemas de linting que Ruff pueda solucionar. |
+| `just format` | Aplica el formato de Ruff al código Python. |
+| `just format-check` | Verifica el formato sin modificar archivos. |
+| `just test` | Ejecuta las pruebas automatizadas con Pytest. |
+| `just check` | Ejecuta linting, comprobación de formato y pruebas sin modificar archivos. |
+| `just check-dev` | Aplica correcciones automáticas, formatea el código y ejecuta todas las verificaciones. |
+| `just hooks` | Ejecuta todos los hooks de pre-commit sobre el repositorio. |
+| `just sync-upstream` | Sincroniza `main` con `upstream/main` y publica los cambios en `origin`. |
 
 ### Ejemplos de ejecución
 
@@ -167,11 +179,39 @@ Ejecutar con un proveedor específico:
 just run --provider ollama "Hola"
 ```
 
-Ejecutar todas las verificaciones de calidad:
+### Workflows de calidad
+
+El proyecto dispone de dos comandos principales para validar el código, según el entorno.
+
+#### Desarrollo local
+
+```bash
+just check-dev
+```
+
+Ejecuta las siguientes operaciones en orden:
+
+1. `just lint-fix`: corrige automáticamente los errores de linting compatibles con Ruff.
+2. `just format`: aplica el formato del código.
+3. `just check`: verifica linting, formato y ejecuta las pruebas.
+
+Este comando puede modificar archivos del proyecto. Se recomienda revisar los cambios con `git diff` antes de crear un commit.
+
+#### Integración continua (CI)
 
 ```bash
 just check
 ```
+
+Ejecuta las siguientes verificaciones sin modificar archivos:
+
+1. `just lint`: análisis estático con Ruff.
+2. `just format-check`: validación del formato.
+3. `just test`: ejecución de pruebas con Pytest.
+
+Este comando también es utilizado por GitHub Actions para validar los Pull Requests dirigidos a `develop`.
+
+Las correcciones automáticas no garantizan que todos los problemas puedan resolverse sin intervención manual.
 
 ## Calidad de código
 
@@ -179,16 +219,19 @@ Esta implementación incorpora herramientas para mantener la consistencia y cali
 
 ### Ruff
 
-Se utiliza para realizar análisis estático y formateo de código Python.
+Ruff se utiliza para el análisis estático y el formateo del código Python.
+
+Para comprobar el código sin realizar modificaciones:
 
 ```bash
 just lint
 just format-check
 ```
 
-Para aplicar automáticamente el formato:
+Para aplicar correcciones automáticas:
 
 ```bash
+just lint-fix
 just format
 ```
 
@@ -241,9 +284,18 @@ El workflow utiliza:
 just check
 ```
 
-De esta manera, las verificaciones ejecutadas localmente son las mismas que se utilizan en CI.
+De esta manera, las verificaciones ejecutadas localmente son las mismas que se utilizan en CI, sin modificar los archivos del repositorio.
 
 Actualmente, el workflow no construye la imagen del Dev Container ni ejecuta pruebas de integración con proveedores LLM externos.
+
+Antes de crear un Pull Request, se recomienda ejecutar:
+
+```bash
+just check-dev
+just hooks
+```
+
+Después de aplicar las correcciones, revisa los cambios y confirma que las pruebas se ejecutaron correctamente.
 
 ## Estrategia de versionamiento
 
@@ -259,6 +311,7 @@ El objetivo es mantener una implementación personal acumulativa, conservando el
 | `develop` | Rama principal de la implementación personal |
 | `feat/class-XX` | Desarrollo de las actividades de cada clase |
 | `chore/*` | Infraestructura, configuración y mantenimiento |
+| `fix/*` | Correcciones de errores |
 
 La rama `develop` concentra el trabajo acumulativo de las actividades.
 
@@ -278,6 +331,14 @@ git switch -c feat/class-XX
 ```
 
 **2. Implementar y validar los cambios**
+
+Durante el desarrollo:
+
+```bash
+just check-dev
+```
+
+Antes de crear el commit:
 
 ```bash
 just check
@@ -355,6 +416,8 @@ El repositorio del instructor se configura como remoto `upstream`:
 ```bash
 git remote add upstream https://github.com/RamsesCamas/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen.git
 ```
+
+Este comando solo debe ejecutarse si el remoto `upstream` todavía no está configurado.
 
 Para sincronizar `main`:
 

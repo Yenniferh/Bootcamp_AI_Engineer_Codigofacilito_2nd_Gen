@@ -1,11 +1,16 @@
 {
   "name": "AI Engineer Bootcamp",
   "build": {
-    "dockerfile": "Dockerfile"
+    "dockerfile": "Dockerfile",
+     "args": {
+      "USER_UID": "1000",
+      "USER_GID": "1000"
+    }
   },
   "workspaceFolder": "/workspace",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
-  "remoteUser": "root",
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": true,
   "postCreateCommand": "just setup",
   "customizations": {
     "vscode": {

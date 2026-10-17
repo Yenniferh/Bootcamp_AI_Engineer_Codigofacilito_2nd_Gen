@@ -12,11 +12,15 @@ setup:
 run *args:
     uv run python main.py {{args}}
 
-# Linting
+# Linting sin modificar archivos
 lint:
     uv run ruff check .
 
-# Formato
+# Corregir automáticamente errores de linting
+lint-fix:
+    uv run ruff check --fix .
+
+# Aplicar formato
 format:
     uv run ruff format .
 
@@ -28,11 +32,17 @@ format-check:
 test:
     uv run pytest -q
 
-# Ejecutar todos los controles de CI
+# Validaciones para CI (no modifican archivos)
 check:
     just lint
     just format-check
     just test
+
+# Validaciones para desarrollo local (aplican correcciones)
+check-dev:
+    just lint-fix
+    just format
+    just check
 
 # Ejecutar hooks sobre todo el repositorio
 hooks:
