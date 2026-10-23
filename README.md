@@ -1,4 +1,43 @@
-# Agente Operador — Bootcamp AI Engineer
+# Agente Operador — Bootcamp AI Engineer <!-- omit in toc -->
+
+## Tabla de contenido <!-- omit in toc -->
+- [Sobre el repositorio](#sobre-el-repositorio)
+- [Sobre el proyecto](#sobre-el-proyecto)
+  - [Contenido del bootcamp](#contenido-del-bootcamp)
+- [Entorno de desarrollo](#entorno-de-desarrollo)
+  - [Tecnologías y herramientas](#tecnologías-y-herramientas)
+  - [Requisitos](#requisitos)
+  - [Instalación con Dev Containers](#instalación-con-dev-containers)
+  - [Permisos del entorno](#permisos-del-entorno)
+  - [Instalación sin Dev Container](#instalación-sin-dev-container)
+- [Variables de entorno](#variables-de-entorno)
+- [Automatización con Just](#automatización-con-just)
+  - [Comandos disponibles](#comandos-disponibles)
+  - [Ejemplos de ejecución](#ejemplos-de-ejecución)
+  - [Workflows de calidad](#workflows-de-calidad)
+    - [Desarrollo local](#desarrollo-local)
+    - [Integración continua (CI)](#integración-continua-ci)
+- [Calidad de código](#calidad-de-código)
+  - [Ruff](#ruff)
+  - [Pytest](#pytest)
+  - [Pre-commit](#pre-commit)
+  - [GitHub Actions](#github-actions)
+- [Estrategia de versionamiento](#estrategia-de-versionamiento)
+  - [Organización de ramas](#organización-de-ramas)
+  - [Workflow de desarrollo](#workflow-de-desarrollo)
+  - [Versionamiento de actividades](#versionamiento-de-actividades)
+  - [Sincronización con el repositorio original](#sincronización-con-el-repositorio-original)
+- [Clase 2 — Prompt Engineering \& Context Engineering](#clase-2--prompt-engineering--context-engineering)
+  - [Componentes incorporados](#componentes-incorporados)
+  - [Dependencias](#dependencias)
+  - [Comandos de referencia](#comandos-de-referencia)
+  - [Actividad pendiente](#actividad-pendiente)
+- [Arquitectura inicial](#arquitectura-inicial)
+  - [Componentes principales](#componentes-principales)
+- [Actividades del bootcamp](#actividades-del-bootcamp)
+- [Créditos](#créditos)
+
+## Sobre el repositorio
 
 Implementación personal del proyecto integrador del **Bootcamp AI Engineer con Python — 2ª Edición: Agentes de IA en Producción**, impartido por [Código Facilito](https://codigofacilito.com/).
 
@@ -439,6 +478,76 @@ La sincronización debe realizarse con el árbol de trabajo limpio.
 Los cambios del instructor **no se fusionan automáticamente en `develop`**.
 
 Las nuevas funcionalidades, correcciones o componentes necesarios se revisan e incorporan deliberadamente para evitar mezclar las soluciones del instructor con las implementaciones personales.
+
+## Clase 2 — Prompt Engineering & Context Engineering
+
+Esta etapa incorpora los componentes base de ingeniería de prompts y gestión de contexto del Agente Operador.
+
+El código de referencia corresponde al commit [`e368f638`](https://github.com/RamsesCamas/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/commit/e368f638169ea65c23eb2528a43e48f96b8453e5) del repositorio original.
+
+Los componentes se integraron de forma selectiva, conservando la implementación personal de la clase 1 y evitando incorporar soluciones de las actividades pendientes.
+
+### Componentes incorporados
+
+| Componente                   | Descripción                                               |
+| ---------------------------- | --------------------------------------------------------- |
+| `prompting/`                 | Gestión de prompts versionados mediante `PromptKit`.      |
+| `prompts/`                   | Plantillas YAML y ejemplos para clasificación de tickets. |
+| `context/`                   | Gestión del contexto y presupuestos de tokens.            |
+| `data/`                      | Datasets etiquetados y ejemplos de prompt injection.      |
+| `scripts/compare_prompts.py` | Comparación de versiones de prompts.                      |
+| `scripts/context_demo.py`    | Demostración de gestión del contexto.                     |
+| `tests/`                     | Pruebas de los componentes incorporados.                  |
+
+### Dependencias
+
+Se incorporan las siguientes dependencias:
+
+- **Jinja2:** renderizado de plantillas de prompts.
+- **PyYAML:** lectura y procesamiento de archivos YAML.
+
+Las dependencias se gestionan mediante `uv` y se registran en `pyproject.toml` y `uv.lock`.
+
+### Comandos de referencia
+
+Comparar versiones de prompts:
+
+```bash
+uv run scripts/compare_prompts.py ticket_classifier --versions 1 2
+```
+
+Ejecutar la demostración de gestión del contexto:
+
+```bash
+uv run scripts/context_demo.py
+```
+
+Clasificar un ticket mediante un prompt versionado:
+
+```bash
+uv run main.py --prompt ticket_classifier --ticket T-1099
+```
+
+Ejecutar las verificaciones del proyecto:
+
+```bash
+just check
+```
+
+Los comandos que utilizan proveedores LLM pueden requerir credenciales configuradas en `.env`.
+
+### Actividad pendiente
+
+La actividad de la clase 2 se desarrollará en la rama `feat/class-02` e incluye:
+
+1. Migrar el system prompt del operador a una plantilla YAML versionada.
+2. Evaluar las versiones existentes del clasificador de tickets.
+3. Implementar una tercera versión del prompt utilizando few-shot prompting.
+4. Comparar precisión, consumo de tokens, costos y resistencia a prompt injection.
+
+La integración de los componentes base no implica que estas actividades estén completadas.
+
+Una vez finalizada la actividad, se integrará mediante un Pull Request hacia `develop` y se identificará el hito con el tag `class-02`.
 
 ## Arquitectura inicial
 
