@@ -22,12 +22,6 @@ from core.errors import AllProvidersFailedError
 from core.llm_client import LLMClient
 from prompting import PromptKit, PromptNotFoundError
 
-# TODO(clase-2): migra este system prompt a prompts/operator_assistant/v1.yaml y cárgalo con PromptKit. # noqa: E501
-SYSTEM_PROMPT = (
-    "Eres un asistente de operaciones de una empresa mediana. "
-    "Responde siempre en español, de forma clara y en máximo 3 oraciones."
-)
-
 # --demo: solo Gemini, sin fallbacks. Funciona aunque GroqProvider siga con su TODO.
 DEMO_TICKET_ID = "T-1043"
 TICKETS_PATH = Path(__file__).parent / "data" / "tickets_ejemplo.jsonl"
@@ -149,10 +143,8 @@ def main(argv: list[str] | None = None) -> int:
         params = {**prompt.model_params, **cli_params}
         log_extra = {"prompt_name": prompt.name, "prompt_version": prompt.version}
     else:
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": text or demo_prompt()},
-        ]
+        prompt = PromptKit().get("operator_assistant", 1)
+        messages = prompt.render(user_text=text or demo_prompt())
 
     try:
         client = build_client(args)

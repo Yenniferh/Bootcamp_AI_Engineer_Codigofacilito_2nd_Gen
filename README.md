@@ -31,7 +31,7 @@
   - [Componentes incorporados](#componentes-incorporados)
   - [Dependencias](#dependencias)
   - [Comandos de referencia](#comandos-de-referencia)
-  - [Actividad pendiente](#actividad-pendiente)
+  - [Implementación personal](#implementación-personal)
 - [Arquitectura inicial](#arquitectura-inicial)
   - [Componentes principales](#componentes-principales)
 - [Actividades del bootcamp](#actividades-del-bootcamp)
@@ -536,18 +536,26 @@ just check
 
 Los comandos que utilizan proveedores LLM pueden requerir credenciales configuradas en `.env`.
 
-### Actividad pendiente
+### Implementación personal
 
-La actividad de la clase 2 se desarrollará en la rama `feat/class-02` e incluye:
+La actividad de la clase 2 se implementó en `feat/class-02`, incorporando las siguientes funcionalidades:
 
-1. Migrar el system prompt del operador a una plantilla YAML versionada.
-2. Evaluar las versiones existentes del clasificador de tickets.
-3. Implementar una tercera versión del prompt utilizando few-shot prompting.
-4. Comparar precisión, consumo de tokens, costos y resistencia a prompt injection.
+- Migración del system prompt del operador a `prompts/operator_assistant/v1.yaml`, utilizando `PromptKit` para cargar y renderizar la plantilla.
+- Implementación de `ticket_classifier/v3.yaml` mediante few-shot prompting.
+- Configuración de v3 como versión activa, manteniendo disponibles las versiones anteriores.
+- Evaluación comparativa de precisión, consumo de tokens, costos y resistencia a prompt injection.
 
-La integración de los componentes base no implica que estas actividades estén completadas.
+**Resultados de la evaluación**
 
-Una vez finalizada la actividad, se integrará mediante un Pull Request hacia `develop` y se identificará el hito con el tag `class-02`.
+| Versión | Precisión | Tokens promedio | Costo / 1K tickets | Ataques resistidos |
+| ------- | --------: | --------------: | -----------------: | -----------------: |
+| v1      |       80% |              68 |            $0.0259 |                2/5 |
+| v2      |       90% |             183 |            $0.0601 |                4/5 |
+| v3      |      100% |             500 |            $0.1547 |                5/5 |
+
+La versión v3 obtuvo mejores resultados en el conjunto de evaluación utilizado, aunque incrementó el consumo de tokens y el costo estimado. Estos resultados corresponden a una evaluación pequeña y no garantizan el mismo comportamiento con otros modelos o datasets.
+
+Los detalles de los tickets evaluados y las diferencias entre versiones están documentados en [PR #5](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/5).
 
 ## Arquitectura inicial
 
