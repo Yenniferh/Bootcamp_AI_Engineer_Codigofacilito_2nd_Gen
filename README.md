@@ -27,14 +27,9 @@
   - [Workflow de desarrollo](#workflow-de-desarrollo)
   - [Versionamiento de actividades](#versionamiento-de-actividades)
   - [Sincronización con el repositorio original](#sincronización-con-el-repositorio-original)
-- [Clase 2 — Prompt Engineering \& Context Engineering](#clase-2--prompt-engineering--context-engineering)
-  - [Componentes incorporados](#componentes-incorporados)
-  - [Dependencias](#dependencias)
-  - [Comandos de referencia](#comandos-de-referencia)
-  - [Implementación personal](#implementación-personal)
 - [Arquitectura inicial](#arquitectura-inicial)
   - [Componentes principales](#componentes-principales)
-- [Actividades del bootcamp](#actividades-del-bootcamp)
+- [Desarrollo del bootcamp](#desarrollo-del-bootcamp)
 - [Créditos](#créditos)
 
 ## Sobre el repositorio
@@ -44,6 +39,8 @@ Implementación personal del proyecto integrador del **Bootcamp AI Engineer con 
 Este repositorio es un fork del proyecto original desarrollado por [Ramses Camas](https://github.com/RamsesCamas/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen).
 
 El objetivo de esta implementación es desarrollar progresivamente las actividades del bootcamp, aplicando buenas prácticas de ingeniería de software, automatización, calidad de código y control de versiones.
+
+El progreso de las actividades, los commits de referencia del instructor y las decisiones de implementación personal se documentan por separado en el [índice de clases](docs/README.md).
 
 > **Nota:** Esta es una implementación personal e independiente. Las soluciones de las actividades pueden diferir de las propuestas por el instructor.
 
@@ -479,84 +476,6 @@ Los cambios del instructor **no se fusionan automáticamente en `develop`**.
 
 Las nuevas funcionalidades, correcciones o componentes necesarios se revisan e incorporan deliberadamente para evitar mezclar las soluciones del instructor con las implementaciones personales.
 
-## Clase 2 — Prompt Engineering & Context Engineering
-
-Esta etapa incorpora los componentes base de ingeniería de prompts y gestión de contexto del Agente Operador.
-
-El código de referencia corresponde al commit [`e368f638`](https://github.com/RamsesCamas/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/commit/e368f638169ea65c23eb2528a43e48f96b8453e5) del repositorio original.
-
-Los componentes se integraron de forma selectiva, conservando la implementación personal de la clase 1 y evitando incorporar soluciones de las actividades pendientes.
-
-### Componentes incorporados
-
-| Componente                   | Descripción                                               |
-| ---------------------------- | --------------------------------------------------------- |
-| `prompting/`                 | Gestión de prompts versionados mediante `PromptKit`.      |
-| `prompts/`                   | Plantillas YAML y ejemplos para clasificación de tickets. |
-| `context/`                   | Gestión del contexto y presupuestos de tokens.            |
-| `data/`                      | Datasets etiquetados y ejemplos de prompt injection.      |
-| `scripts/compare_prompts.py` | Comparación de versiones de prompts.                      |
-| `scripts/context_demo.py`    | Demostración de gestión del contexto.                     |
-| `tests/`                     | Pruebas de los componentes incorporados.                  |
-
-### Dependencias
-
-Se incorporan las siguientes dependencias:
-
-- **Jinja2:** renderizado de plantillas de prompts.
-- **PyYAML:** lectura y procesamiento de archivos YAML.
-
-Las dependencias se gestionan mediante `uv` y se registran en `pyproject.toml` y `uv.lock`.
-
-### Comandos de referencia
-
-Comparar versiones de prompts:
-
-```bash
-uv run scripts/compare_prompts.py ticket_classifier --versions 1 2
-```
-
-Ejecutar la demostración de gestión del contexto:
-
-```bash
-uv run scripts/context_demo.py
-```
-
-Clasificar un ticket mediante un prompt versionado:
-
-```bash
-uv run main.py --prompt ticket_classifier --ticket T-1099
-```
-
-Ejecutar las verificaciones del proyecto:
-
-```bash
-just check
-```
-
-Los comandos que utilizan proveedores LLM pueden requerir credenciales configuradas en `.env`.
-
-### Implementación personal
-
-La actividad de la clase 2 se implementó en `feat/class-02`, incorporando las siguientes funcionalidades:
-
-- Migración del system prompt del operador a `prompts/operator_assistant/v1.yaml`, utilizando `PromptKit` para cargar y renderizar la plantilla.
-- Implementación de `ticket_classifier/v3.yaml` mediante few-shot prompting.
-- Configuración de v3 como versión activa, manteniendo disponibles las versiones anteriores.
-- Evaluación comparativa de precisión, consumo de tokens, costos y resistencia a prompt injection.
-
-**Resultados de la evaluación**
-
-| Versión | Precisión | Tokens promedio | Costo / 1K tickets | Ataques resistidos |
-| ------- | --------: | --------------: | -----------------: | -----------------: |
-| v1      |       80% |              68 |            $0.0259 |                2/5 |
-| v2      |       90% |             183 |            $0.0601 |                4/5 |
-| v3      |      100% |             500 |            $0.1547 |                5/5 |
-
-La versión v3 obtuvo mejores resultados en el conjunto de evaluación utilizado, aunque incrementó el consumo de tokens y el costo estimado. Estos resultados corresponden a una evaluación pequeña y no garantizan el mismo comportamiento con otros modelos o datasets.
-
-Los detalles de los tickets evaluados y las diferencias entre versiones están documentados en [PR #5](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/5).
-
 ## Arquitectura inicial
 
 El proyecto comienza con un cliente LLM capaz de interactuar con múltiples proveedores mediante una abstracción común.
@@ -597,20 +516,13 @@ flowchart TD
 
 Esta arquitectura evolucionará progresivamente con las actividades del bootcamp.
 
-## Actividades del bootcamp
+## Desarrollo del bootcamp
 
-Las actividades se desarrollan de manera acumulativa.
+El proyecto se desarrolla progresivamente durante las 17 clases del bootcamp.
 
-Cada implementación parte de las funcionalidades desarrolladas anteriormente, permitiendo construir progresivamente una versión personal del Agente Operador.
+Cada clase cuenta con documentación independiente que registra el código base del instructor, las actividades, la implementación personal y los resultados obtenidos.
 
-Cada clase tiene dos referencias principales:
-
-| Referencia | Ejemplo | Propósito |
-|---|---|---|
-| Rama de desarrollo | `feat/class-01` | Implementar y revisar la actividad |
-| Tag de finalización | `class-01` | Identificar el estado integrado de la clase |
-
-El historial de Pull Requests y los tags permiten consultar la evolución del proyecto y las decisiones técnicas adoptadas durante el aprendizaje.
+Consulta el [índice de clases](docs/README.md) para revisar el progreso y acceder a la documentación de cada actividad.
 
 ## Créditos
 
