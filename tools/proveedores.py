@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import re
+import unicodedata
 from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -15,10 +17,23 @@ PROVEEDORES_DB = Path(__file__).resolve().parents[1] / "data" / "proveedores.jso
 HISTORY_LIMIT = 3
 
 
+def normalize_provider_name(name: str) -> str:
+    lowercased = name.casefold()
+    unicode_normalized = unicodedata.normalize("NFKD", lowercased)
+    without_accents = "".join(
+        char for char in unicode_normalized if unicodedata.category(char) != "Mn"
+    )
+
+    normalized_whitespace = " ".join(without_accents.split())
+    no_punctuation = re.sub(r"[^a-z0-9\s]", "", normalized_whitespace)
+
+    return no_punctuation
+
+
 @lru_cache(maxsize=1)
 def _proveedores() -> dict[str, dict]:
     proveedores = json.loads(PROVEEDORES_DB.read_text(encoding="utf-8"))
-    return {proveedor["nombre"]: proveedor for proveedor in proveedores}
+    return {normalize_provider_name(proveedor["nombre"]): proveedor for proveedor in proveedores}
 
 
 def consultar_proveedor(args: ConsultarProveedorArgs) -> dict:
