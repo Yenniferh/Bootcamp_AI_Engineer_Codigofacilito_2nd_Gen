@@ -1,4 +1,4 @@
-# Class 03 — Structured Outputs & Tools
+    # Class 03 — Structured Outputs & Tools
 
 ## Overview
 
@@ -65,37 +65,84 @@ La ejecución debe registrar ambas herramientas dentro de una misma solicitud.
 
 **Branch:** `feat/class-03`
 
-**Status:** Pending
+**Pull Request:** [PR #8 — consultar_proveedor tool](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/8)
 
-La implementación personal se documentará al completar la actividad.
+Se implementó una segunda herramienta para consultar información de proveedores y permitir que el Agente Operador combine sus resultados con los obtenidos mediante `buscar_ticket`.
+
+### Provider Tool
+
+Se incorporaron los siguientes componentes:
+
+| Component | Responsibility |
+|---|---|
+| `ConsultarProveedorArgs` | Contrato Pydantic para recibir el nombre del proveedor. |
+| `CONSULTAR_PROVEEDOR` | Definición de la herramienta mediante `ToolSpec`. |
+| `tools/proveedores.py` | Consulta de información desde `data/proveedores.json`. |
+| `main.py` | Registro de la nueva herramienta junto con `BUSCAR_TICKET`. |
+
+La herramienta devuelve información como el nombre, estado, SLA, contacto y contratos vigentes del proveedor.
+
+### Provider Name Normalization
+
+Se incorporó una función `normalize_provider_name()` para realizar búsquedas sin depender de la capitalización o de las tildes utilizadas en los nombres.
+
+La normalización utiliza herramientas de la biblioteca estándar de Python:
+
+- `str.casefold()` para comparaciones sin distinguir mayúsculas y minúsculas.
+- `unicodedata.normalize()` para descomponer caracteres Unicode.
+- Eliminación de marcas diacríticas.
+- Expresiones regulares para tratar puntuación y espacios.
+
+Esto permite resolver variaciones como `PagosRed`, `pagosred` y `PAGOSRED` utilizando una misma clave normalizada.
+
+La búsqueda utiliza un índice de proveedores almacenado en caché mediante `lru_cache`, evitando lecturas repetidas del archivo JSON durante el mismo proceso.
+
+### Tool Integration
+
+La herramienta `CONSULTAR_PROVEEDOR` se registró junto con `BUSCAR_TICKET` en el ciclo de ejecución existente.
+
+Esto permite al modelo consultar primero un ticket, identificar su proveedor y posteriormente obtener información adicional sobre él.
 
 ## Validation & Results
 
-**Status:** Pending
+Se añadieron pruebas automatizadas en `tests/test_proveedores.py` para verificar la normalización y consulta de proveedores.
 
-Para validar el código base:
+### Validation
+
+Las verificaciones del proyecto se ejecutan mediante:
 
 ```bash
 just check
 ```
 
-Para probar las capacidades iniciales:
+La funcionalidad de la herramienta puede probarse utilizando:
 
 ```bash
-uv run main.py --structured --ticket T-1042
-uv run main.py --tools "¿Cómo va el T-1042?"
+uv run main.py --tools "¿El T-1042 depende de algún proveedor? ¿Cuál es su SLA?"
 ```
 
-Las llamadas reales a modelos requieren proveedores configurados y credenciales válidas.
+### Functional Results
 
-Los resultados de la actividad se añadirán cuando esté completada.
+Se comprobó el funcionamiento del agente utilizando la pregunta propuesta durante la clase.
+
+La ejecución permite combinar las herramientas `buscar_ticket` y `consultar_proveedor` dentro de una misma solicitud para recuperar información del ticket y del proveedor asociado.
+
+Las evidencias de ejecución están disponibles en el [PR #8](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/8).
+
+### Limitations
+
+La consulta de proveedores utiliza coincidencia exacta después de normalizar el nombre.
+
+Esta estrategia permite manejar diferencias de capitalización, tildes y puntuación, pero no garantiza coincidencias ante errores ortográficos, abreviaturas desconocidas o nombres alternativos.
+
+No se incorporó fuzzy matching, manteniendo el alcance de la actividad y evitando seleccionar proveedores incorrectos por similitud.
 
 ## Milestone
 
-**Tag:** `class-03` — Pending
+**Tag:** `class-03` — Pending merge
 
 **Starter PR:** [#7](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/7)
 
-**Activity PR:** Pending
+**Activity PR:** [#8](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/8)
 
-El tag se creará después de integrar la implementación personal de la clase 3 en `develop`.
+El tag `class-03` se creará después de integrar el PR de la actividad en `develop`.
