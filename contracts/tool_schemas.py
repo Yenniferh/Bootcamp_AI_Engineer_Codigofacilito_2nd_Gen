@@ -52,12 +52,16 @@ BUSCAR_TICKET = ToolSpec(
 
 
 class ConsultarProveedorArgs(BaseModel):
-    provider_name: str = Field()
+    provider_name: str = Field(description="Nombre del proveedor que se desea consultar.")
 
 
 CONSULTAR_PROVEEDOR = ToolSpec(
     name="consultar_proveedor",
-    description=("Obtiene la informacion de un proveedor por su nombre. "),
+    description=(
+        "Consulta información de un proveedor registrado, incluyendo "
+        "su estado, SLA, contacto y contratos vigentes. "
+        "Úsala cuando necesites información sobre un proveedor específico. "
+    ),
     args_model=ConsultarProveedorArgs,
     handler=consultar_proveedor,
 )

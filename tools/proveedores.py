@@ -24,10 +24,10 @@ def normalize_provider_name(name: str) -> str:
         char for char in unicode_normalized if unicodedata.category(char) != "Mn"
     )
 
-    normalized_whitespace = " ".join(without_accents.split())
-    no_punctuation = re.sub(r"[^a-z0-9\s]", "", normalized_whitespace)
+    replace_punctuation_with_space = re.sub(r"[^a-z0-9\s]", " ", without_accents)
+    normalized_spacing = " ".join(replace_punctuation_with_space.split())
 
-    return no_punctuation
+    return normalized_spacing
 
 
 @lru_cache(maxsize=1)
@@ -38,7 +38,7 @@ def _proveedores() -> dict[str, dict]:
 
 def consultar_proveedor(args: ConsultarProveedorArgs) -> dict:
     """Estado, SLA (horas) y contacto de un proveedor."""
-    proveedor = _proveedores().get(args.provider_name)
+    proveedor = _proveedores().get(normalize_provider_name(args.provider_name))
     if proveedor is None:
         return {"error": f"proveedor {args.provider_name} no existe"}
     return {
