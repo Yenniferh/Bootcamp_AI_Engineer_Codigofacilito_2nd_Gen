@@ -11,6 +11,7 @@ Este directorio registra la evolución del proyecto, diferenciando el código ba
 | 01 | LLM Fundamentals | Completed | [Class 01](classes/class-01.md) |
 | 02 | Prompt & Context Engineering | Completed | [Class 02](classes/class-02.md) |
 | 03 | Structured Outputs & Tools | Completed | [Class 03](classes/class-03.md) |
+| 04 | AI Agents — ReAct & Plan-and-Execute | In Progress | [Class 04](classes/class-04.md) |
 
 Las clases siguientes se incorporarán a este índice conforme avance el bootcamp.
 
