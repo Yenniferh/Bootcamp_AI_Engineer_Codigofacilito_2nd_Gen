@@ -3,12 +3,14 @@ from __future__ import annotations
 from agents import AgentBudget, AgentStep, TraceStep
 
 
-def step(tokens: int = 100, cost: float = 0.001) -> TraceStep:
+def step(
+    tokens: int = 100, cost: float = 0.001, step_args: str = '{"ticket_id": "T-1042"}'
+) -> TraceStep:
     paso = AgentStep(
         pensamiento="Busco el ticket.",
         accion="usar_herramienta",
         herramienta="buscar_ticket",
-        argumentos_json='{"ticket_id": "T-1042"}',
+        argumentos_json=step_args,
         respuesta=None,
     )
     return TraceStep(paso, {"estado": "abierto"}, tokens, cost, 10.0)
@@ -57,3 +59,18 @@ def test_exhausted_totals_uses_same_rules():
     assert budget.exhausted_totals(0, 100, 0, 0) == "presupuesto"
     assert budget.exhausted_totals(0, 0, 0.01, 0) == "presupuesto"
     assert budget.exhausted_totals(0, 0, 0, 5) == "timeout"
+
+
+def test_sin_progreso():
+    assert (
+        AgentBudget().exhausted([step(tokens=200), step(tokens=200)], elapsed_s=1) == "sin_progreso"
+    )
+
+
+def test_same_tool_call_different_args():
+    assert (
+        AgentBudget().exhausted(
+            [step(tokens=200), step(tokens=200, step_args='{"ticket_id": "T-1234"}')], elapsed_s=1
+        )
+        is None
+    )
