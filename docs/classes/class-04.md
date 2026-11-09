@@ -94,50 +94,80 @@ Un agente que repite una acción sin obtener información nueva debe detenerse d
 
 **Branch:** `feat/class-04`
 
-**Status:** Pending
+**Status:** Completed
 
-La implementación personal se documentará cuando se complete la actividad.
+**Pull Request:** [PR #10 — Add `sin_progreso` exit case to agents](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/10)
+
+### No-Progress Detection
+
+Se implementó la detección de ejecuciones repetitivas dentro de `AgentBudget.exhausted()` en `agents/budget.py`.
+
+La solución compara los dos últimos pasos registrados en la traza del agente, verificando:
+
+- Que existan al menos dos pasos.
+- Que ambos utilicen la misma herramienta.
+- Que los argumentos JSON sean idénticos.
+
+Cuando se cumplen estas condiciones, el presupuesto devuelve el motivo de parada `sin_progreso`.
+
+La implementación aprovecha el mecanismo de presupuesto existente, sin introducir nuevos ciclos de ejecución ni modificar la arquitectura de ReAct.
+
+### Design Decisions
+
+- Se reutilizó `AgentBudget.exhausted()` como punto central de validación.
+- La detección compara los argumentos JSON tal como fueron registrados, sin normalización adicional.
+- No se modificó `exhausted_totals()`, utilizado por Plan-and-Execute para controlar presupuestos agregados.
+- Se conservaron los límites existentes de pasos, tokens, costos y tiempo.
 
 ## Validation & Results
 
-**Status:** Pending
+**Status:** Completed
+
+### Automated Tests
+
+Se incorporaron tres pruebas:
+
+| Test                                 | Expected Behavior                                                                  |
+| ------------------------------------ | ---------------------------------------------------------------------------------- |
+| `test_sin_progreso`                  | Dos llamadas consecutivas idénticas devuelven `sin_progreso`.                      |
+| `test_same_tool_call_different_args` | La misma herramienta con argumentos diferentes no activa la detección.             |
+| `test_stops_when_no_progress`        | ReAct se detiene después de dos llamadas repetidas y registra el motivo de parada. |
+
+La prueba de integración utiliza un proveedor simulado (`FakeProvider`) para reproducir llamadas consecutivas a `buscar_ticket` con el mismo identificador.
+
+### Results
+
+Los escenarios automatizados verifican que:
+
+1. `AgentBudget` detecta llamadas consecutivas repetidas.
+2. Las llamadas con argumentos distintos no se consideran repetidas.
+3. `ReActAgent` finaliza con el motivo `sin_progreso`.
+4. La traza conserva los dos pasos ejecutados.
+5. El log registra `stop_reason: sin_progreso`.
 
 ### Validation Commands
 
-Ejecutar las verificaciones de calidad y pruebas:
-
 ```bash
+uv run pytest tests/test_budget.py tests/test_react_agent.py -q
 just check
 ```
 
-Ejecutar el agente ReAct:
+Estas verificaciones permiten comprobar la detección de falta de progreso y la compatibilidad con las funcionalidades existentes.
 
-```bash
-uv run main.py --agent react "Compara el estado del T-1042 y el T-1014: ¿cuál va más avanzado?"
-```
+### Limitations
 
-Ejecutar Plan-and-Execute:
+La detección utiliza una comparación exacta de los argumentos JSON.
 
-```bash
-uv run main.py --agent plan "Compara el estado del T-1042 y el T-1014: ¿cuál va más avanzado?"
-```
+Dos llamadas semánticamente equivalentes podrían no identificarse como repetidas si sus argumentos utilizan diferentes representaciones JSON.
 
-Comparar estrategias:
-
-```bash
-uv run scripts/compare_agents.py
-```
-
-Los comandos que utilizan proveedores LLM requieren credenciales válidas y pueden generar consumo de tokens.
-
-Los resultados de la actividad y las decisiones de implementación se documentarán después de completar el reto.
+Asimismo, la implementación detecta llamadas consecutivas, no patrones repetitivos separados por otras acciones.
 
 ## Milestone
 
-**Tag:** `class-04` — Pending
+**Tag:** `class-04`
 
 **Starter PR:** [#9](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/9)
 
-**Activity PR:** Pending
+**Activity PR:** [#10](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/10)
 
-El tag `class-04` se creará después de integrar la implementación personal de la clase 4 en `develop`.
+La implementación de la clase 4 se integró en `develop` mediante el PR #10.
