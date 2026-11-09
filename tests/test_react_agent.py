@@ -193,3 +193,24 @@ def test_stop_reason_logged_when_budget_stops(logger, log_path, fake_sleep):
     assert result.motivo == "max_pasos"
     [event] = read_events(log_path)
     assert event["stop_reason"] == "max_pasos"
+
+
+def test_stops_when_no_progress(logger, log_path, fake_sleep):
+    script = [
+        use_tool(ticket_id="T-9999"),
+        use_tool(ticket_id="T-9999"),
+    ]
+
+    provider, agent = make_agent(
+        script,
+        logger,
+        fake_sleep,
+    )
+
+    result = agent.run("¿Cómo va el T-9999?")
+
+    assert result.motivo == "sin_progreso"
+    assert len(provider.calls) == 2
+    assert len(result.traza) == 2
+    _, last = read_events(log_path)
+    assert last["stop_reason"] == "sin_progreso"
