@@ -43,7 +43,7 @@ def test_consultar_proveedor_case_insensitive(monkeypatch):
         lambda: fake_providers,
     )
 
-    args = ConsultarProveedorArgs(provider_name="PAGOSRED")
+    args = ConsultarProveedorArgs(nombre="PAGOSRED")
     result = proveedores.consultar_proveedor(args)
 
     assert result["nombre"] == "PagosRed"
@@ -66,7 +66,7 @@ def test_consultar_proveedor_not_found(monkeypatch):
         lambda: fake_providers,
     )
 
-    args = ConsultarProveedorArgs(provider_name="RED de Pagos")
+    args = ConsultarProveedorArgs(nombre="RED de Pagos")
     result = proveedores.consultar_proveedor(args)
 
     assert result["error"] == "proveedor RED de Pagos no existe"

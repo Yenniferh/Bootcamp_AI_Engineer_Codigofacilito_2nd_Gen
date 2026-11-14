@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 # Ruta fija: nunca se construye a partir de los argumentos del modelo.
 PROVEEDORES_DB = Path(__file__).resolve().parents[1] / "data" / "proveedores.json"
-HISTORY_LIMIT = 3
+CAMPOS = ("nombre", "servicio", "sla_horas", "estado", "contacto")
 
 
 def normalize_provider_name(name: str) -> str:
@@ -32,19 +32,17 @@ def normalize_provider_name(name: str) -> str:
 
 @lru_cache(maxsize=1)
 def _proveedores() -> dict[str, dict]:
-    proveedores = json.loads(PROVEEDORES_DB.read_text(encoding="utf-8"))
-    return {normalize_provider_name(proveedor["nombre"]): proveedor for proveedor in proveedores}
+    data = json.loads(PROVEEDORES_DB.read_text(encoding="utf-8"))
+    items = data if isinstance(data, list) else data["proveedores"]
+    return {normalize_provider_name(proveedor["nombre"]): proveedor for proveedor in items}
 
 
 def consultar_proveedor(args: ConsultarProveedorArgs) -> dict:
     """Estado, SLA (horas) y contacto de un proveedor."""
-    proveedor = _proveedores().get(normalize_provider_name(args.provider_name))
+    proveedor = _proveedores().get(normalize_provider_name(args.nombre))
     if proveedor is None:
-        return {"error": f"proveedor {args.provider_name} no existe"}
-    return {
-        "nombre": proveedor["nombre"],
-        "sla_horas": proveedor["sla_horas"],
-        "estado": proveedor["estado"],
-        "contacto": proveedor["contacto"],
-        "contratos_vigentes": proveedor["contratos_vigentes"],
-    }
+        return {
+            "error": f"proveedor {args.nombre} no existe",
+            "disponibles": sorted(p["nombre"] for p in _proveedores().values()),
+        }
+    return {k: proveedor[k] for k in CAMPOS if k in proveedor}
