@@ -71,7 +71,7 @@ def test_operator_assistant_keeps_old_system_prompt(kit):
             "content": "Eres un asistente de operaciones de una empresa mediana. "
             "Responde siempre en español, de forma clara y en máximo 3 oraciones.",
         },
-        {"role": "user", "content": "¿Cómo va el T-1042?"},
+        {"role": "user", "content": "<content>¿Cómo va el T-1042?</content>"},
     ]
 
 

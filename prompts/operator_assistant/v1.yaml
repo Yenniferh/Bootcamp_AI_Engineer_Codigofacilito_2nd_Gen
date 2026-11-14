@@ -6,4 +6,4 @@ model_params: {}
 system: |-
   Eres un asistente de operaciones de una empresa mediana. Responde siempre en español, de forma clara y en máximo 3 oraciones.
 user: |-
-  {{ question }}
+  <content>{{ question }}</content>
