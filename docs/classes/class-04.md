@@ -74,70 +74,117 @@ Los límites pueden detener la ejecución cuando el agente consume el presupuest
 
 ## Activity
 
-La práctica de la clase 4 se enfoca en mejorar la detección de agentes que repiten acciones sin producir información nueva.
+Class 04 included a guided practice and an independent challenge.
 
-### Requirements
+### Guided Practice: No-Progress Detection
 
-1. Detectar cuando el agente solicita repetidamente la misma herramienta con los mismos argumentos.
-2. Evitar continuar una ejecución que no produce progreso.
-3. Registrar el motivo de parada `sin_progreso`.
-4. Mantener los mecanismos existentes de presupuesto y trazabilidad.
-5. Validar el comportamiento mediante los escenarios de ejecución correspondientes.
+The guided practice focused on preventing ReAct agents from repeatedly executing the same tool with identical arguments.
 
-La solución debe integrarse en la arquitectura existente sin modificar innecesariamente las estrategias de planificación o ejecución.
+The activity was not completed during the live session due to time constraints.
 
-### Expected Behavior
+#### Requirements
 
-Un agente que repite una acción sin obtener información nueva debe detenerse de forma controlada, en lugar de consumir indefinidamente pasos, tokens y presupuesto.
+1. Detect consecutive calls to the same tool with identical arguments.
+2. Return `sin_progreso` as the stopping reason.
+3. Preserve the existing execution budget and trace mechanisms.
+4. Verify the behavior using a `FakeProvider` and automated tests.
+
+### Independent Challenge: Response Verifier
+
+The independent challenge was to implement a response verifier.
+
+#### Requirements
+
+1. Create `agents/verifier.py` with a Pydantic contract named `Verificacion`.
+2. Verify that factual claims in the response are supported by the agent's trace observations.
+3. Request at most one correction when verification fails.
+4. Compare five questions with and without verification, measuring LLM calls, tokens, and corrected responses.
+
+The challenge was not independently implemented. The instructor's solution was subsequently incorporated as part of the Class 05 starter.
 
 ## Personal Implementation
 
 **Branch:** `feat/class-04`
 
-**Status:** Pending
+**Status:** Guided practice completed; independent challenge not implemented.
 
-La implementación personal se documentará cuando se complete la actividad.
+**Pull Request:** [PR #10 - Add `sin_progreso` exit case to agents](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/10)
+
+### Guided Practice Implementation
+
+Implemented no-progress detection in `AgentBudget.exhausted()` within `agents/budget.py`.
+
+The implementation examines the last two steps in the agent's trace and checks whether:
+
+- Both steps reference the same tool.
+- Both contain identical JSON arguments.
+
+When both conditions are met, `exhausted()` returns `sin_progreso`.
+
+This approach reuses the existing budget mechanism rather than introducing a separate detection system.
+
+### Design Decisions
+
+- Kept the detection inside `AgentBudget.exhausted()`.
+- Compared the recorded JSON arguments directly, without additional normalization.
+- Preserved existing budget limits for steps, tokens, cost, and execution time.
+- Left `exhausted_totals()` unchanged because it handles aggregated budget usage rather than individual tool calls.
+
+### Independent Challenge
+
+The response verifier was not developed independently.
+
+The instructor's implementation was introduced in the Class 05 starter, including `agents/verifier.py` and the corresponding verifier and reviser prompts.
 
 ## Validation & Results
 
-**Status:** Pending
+**Status:** Guided practice implemented and covered by automated tests.
+
+### Automated Tests
+
+Three tests were added:
+
+| Test | Expected Behavior |
+|---|---|
+| `test_sin_progreso` | Two identical consecutive tool calls produce `sin_progreso`. |
+| `test_same_tool_call_different_args` | Different arguments do not trigger no-progress detection. |
+| `test_stops_when_no_progress` | ReAct stops after two repeated calls and records `sin_progreso`. |
+
+The integration test uses a `FakeProvider` to reproduce repeated `buscar_ticket` calls.
 
 ### Validation Commands
 
-Ejecutar las verificaciones de calidad y pruebas:
-
 ```bash
+uv run pytest tests/test_budget.py tests/test_react_agent.py -q
 just check
 ```
 
-Ejecutar el agente ReAct:
+### Results
 
-```bash
-uv run main.py --agent react "Compara el estado del T-1042 y el T-1014: ¿cuál va más avanzado?"
-```
+The added tests cover:
 
-Ejecutar Plan-and-Execute:
+- Detection of consecutive identical tool calls.
+- Avoidance of false positives when arguments differ.
+- Controlled termination of the ReAct agent.
+- Preservation of the execution trace.
+- Recording `stop_reason: sin_progreso` in the LLM log.
 
-```bash
-uv run main.py --agent plan "Compara el estado del T-1042 y el T-1014: ¿cuál va más avanzado?"
-```
+### Limitations
 
-Comparar estrategias:
+The implementation compares JSON arguments as strings.
 
-```bash
-uv run scripts/compare_agents.py
-```
+Semantically equivalent JSON objects with different formatting or property order may not be recognized as identical.
 
-Los comandos que utilizan proveedores LLM requieren credenciales válidas y pueden generar consumo de tokens.
-
-Los resultados de la actividad y las decisiones de implementación se documentarán después de completar el reto.
+The detection also considers only consecutive tool calls, not repeated patterns separated by other actions.
 
 ## Milestone
 
-**Tag:** `class-04` — Pending
+**Tag:** `class-04`
 
 **Starter PR:** [#9](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/9)
 
-**Activity PR:** Pending
+**Guided Practice PR:** [#10](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/10)
 
-El tag `class-04` se creará después de integrar la implementación personal de la clase 4 en `develop`.
+**Independent Challenge:** Not independently implemented.
+
+The Class 04 milestone represents the completion of the guided practice and its integration into `develop`. The verifier solution was incorporated later from the instructor's code as part of the Class 05 starter.
