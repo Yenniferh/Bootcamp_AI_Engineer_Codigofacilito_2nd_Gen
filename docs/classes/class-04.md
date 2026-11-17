@@ -74,76 +74,83 @@ Los límites pueden detener la ejecución cuando el agente consume el presupuest
 
 ## Activity
 
-La práctica de la clase 4 se enfoca en mejorar la detección de agentes que repiten acciones sin producir información nueva.
+Class 04 included a guided practice and an independent challenge.
 
-### Requirements
+### Guided Practice: No-Progress Detection
 
-1. Detectar cuando el agente solicita repetidamente la misma herramienta con los mismos argumentos.
-2. Evitar continuar una ejecución que no produce progreso.
-3. Registrar el motivo de parada `sin_progreso`.
-4. Mantener los mecanismos existentes de presupuesto y trazabilidad.
-5. Validar el comportamiento mediante los escenarios de ejecución correspondientes.
+The guided practice focused on preventing ReAct agents from repeatedly executing the same tool with identical arguments.
 
-La solución debe integrarse en la arquitectura existente sin modificar innecesariamente las estrategias de planificación o ejecución.
+The activity was not completed during the live session due to time constraints.
 
-### Expected Behavior
+#### Requirements
 
-Un agente que repite una acción sin obtener información nueva debe detenerse de forma controlada, en lugar de consumir indefinidamente pasos, tokens y presupuesto.
+1. Detect consecutive calls to the same tool with identical arguments.
+2. Return `sin_progreso` as the stopping reason.
+3. Preserve the existing execution budget and trace mechanisms.
+4. Verify the behavior using a `FakeProvider` and automated tests.
+
+### Independent Challenge: Response Verifier
+
+The independent challenge was to implement a response verifier.
+
+#### Requirements
+
+1. Create `agents/verifier.py` with a Pydantic contract named `Verificacion`.
+2. Verify that factual claims in the response are supported by the agent's trace observations.
+3. Request at most one correction when verification fails.
+4. Compare five questions with and without verification, measuring LLM calls, tokens, and corrected responses.
+
+The challenge was not independently implemented. The instructor's solution was subsequently incorporated as part of the Class 05 starter.
 
 ## Personal Implementation
 
 **Branch:** `feat/class-04`
 
-**Status:** Completed
+**Status:** Guided practice completed; independent challenge not implemented.
 
-**Pull Request:** [PR #10 — Add `sin_progreso` exit case to agents](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/10)
+**Pull Request:** [PR #10 - Add `sin_progreso` exit case to agents](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/10)
 
-### No-Progress Detection
+### Guided Practice Implementation
 
-Se implementó la detección de ejecuciones repetitivas dentro de `AgentBudget.exhausted()` en `agents/budget.py`.
+Implemented no-progress detection in `AgentBudget.exhausted()` within `agents/budget.py`.
 
-La solución compara los dos últimos pasos registrados en la traza del agente, verificando:
+The implementation examines the last two steps in the agent's trace and checks whether:
 
-- Que existan al menos dos pasos.
-- Que ambos utilicen la misma herramienta.
-- Que los argumentos JSON sean idénticos.
+- Both steps reference the same tool.
+- Both contain identical JSON arguments.
 
-Cuando se cumplen estas condiciones, el presupuesto devuelve el motivo de parada `sin_progreso`.
+When both conditions are met, `exhausted()` returns `sin_progreso`.
 
-La implementación aprovecha el mecanismo de presupuesto existente, sin introducir nuevos ciclos de ejecución ni modificar la arquitectura de ReAct.
+This approach reuses the existing budget mechanism rather than introducing a separate detection system.
 
 ### Design Decisions
 
-- Se reutilizó `AgentBudget.exhausted()` como punto central de validación.
-- La detección compara los argumentos JSON tal como fueron registrados, sin normalización adicional.
-- No se modificó `exhausted_totals()`, utilizado por Plan-and-Execute para controlar presupuestos agregados.
-- Se conservaron los límites existentes de pasos, tokens, costos y tiempo.
+- Kept the detection inside `AgentBudget.exhausted()`.
+- Compared the recorded JSON arguments directly, without additional normalization.
+- Preserved existing budget limits for steps, tokens, cost, and execution time.
+- Left `exhausted_totals()` unchanged because it handles aggregated budget usage rather than individual tool calls.
+
+### Independent Challenge
+
+The response verifier was not developed independently.
+
+The instructor's implementation was introduced in the Class 05 starter, including `agents/verifier.py` and the corresponding verifier and reviser prompts.
 
 ## Validation & Results
 
-**Status:** Completed
+**Status:** Guided practice implemented and covered by automated tests.
 
 ### Automated Tests
 
-Se incorporaron tres pruebas:
+Three tests were added:
 
-| Test                                 | Expected Behavior                                                                  |
-| ------------------------------------ | ---------------------------------------------------------------------------------- |
-| `test_sin_progreso`                  | Dos llamadas consecutivas idénticas devuelven `sin_progreso`.                      |
-| `test_same_tool_call_different_args` | La misma herramienta con argumentos diferentes no activa la detección.             |
-| `test_stops_when_no_progress`        | ReAct se detiene después de dos llamadas repetidas y registra el motivo de parada. |
+| Test | Expected Behavior |
+|---|---|
+| `test_sin_progreso` | Two identical consecutive tool calls produce `sin_progreso`. |
+| `test_same_tool_call_different_args` | Different arguments do not trigger no-progress detection. |
+| `test_stops_when_no_progress` | ReAct stops after two repeated calls and records `sin_progreso`. |
 
-La prueba de integración utiliza un proveedor simulado (`FakeProvider`) para reproducir llamadas consecutivas a `buscar_ticket` con el mismo identificador.
-
-### Results
-
-Los escenarios automatizados verifican que:
-
-1. `AgentBudget` detecta llamadas consecutivas repetidas.
-2. Las llamadas con argumentos distintos no se consideran repetidas.
-3. `ReActAgent` finaliza con el motivo `sin_progreso`.
-4. La traza conserva los dos pasos ejecutados.
-5. El log registra `stop_reason: sin_progreso`.
+The integration test uses a `FakeProvider` to reproduce repeated `buscar_ticket` calls.
 
 ### Validation Commands
 
@@ -152,15 +159,23 @@ uv run pytest tests/test_budget.py tests/test_react_agent.py -q
 just check
 ```
 
-Estas verificaciones permiten comprobar la detección de falta de progreso y la compatibilidad con las funcionalidades existentes.
+### Results
+
+The added tests cover:
+
+- Detection of consecutive identical tool calls.
+- Avoidance of false positives when arguments differ.
+- Controlled termination of the ReAct agent.
+- Preservation of the execution trace.
+- Recording `stop_reason: sin_progreso` in the LLM log.
 
 ### Limitations
 
-La detección utiliza una comparación exacta de los argumentos JSON.
+The implementation compares JSON arguments as strings.
 
-Dos llamadas semánticamente equivalentes podrían no identificarse como repetidas si sus argumentos utilizan diferentes representaciones JSON.
+Semantically equivalent JSON objects with different formatting or property order may not be recognized as identical.
 
-Asimismo, la implementación detecta llamadas consecutivas, no patrones repetitivos separados por otras acciones.
+The detection also considers only consecutive tool calls, not repeated patterns separated by other actions.
 
 ## Milestone
 
@@ -168,6 +183,8 @@ Asimismo, la implementación detecta llamadas consecutivas, no patrones repetiti
 
 **Starter PR:** [#9](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/9)
 
-**Activity PR:** [#10](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/10)
+**Guided Practice PR:** [#10](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/10)
 
-La implementación de la clase 4 se integró en `develop` mediante el PR #10.
+**Independent Challenge:** Not independently implemented.
+
+The Class 04 milestone represents the completion of the guided practice and its integration into `develop`. The verifier solution was incorporated later from the instructor's code as part of the Class 05 starter.
