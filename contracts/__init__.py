@@ -6,17 +6,21 @@ from contracts.tool_loop import MAX_ITERS, MaxIterationsError, execute_tool, run
 from contracts.tool_schemas import (
     BUSCAR_TICKET,
     CONSULTAR_PROVEEDOR,
+    LISTAR_TICKETS_POR_PROVEEDOR,
     BuscarTicketArgs,
     ConsultarProveedorArgs,
+    ListarTicketsPorProveedorArgs,
     ToolSpec,
 )
 
 __all__ = [
     "BUSCAR_TICKET",
     "CONSULTAR_PROVEEDOR",
+    "LISTAR_TICKETS_POR_PROVEEDOR",
     "MAX_ITERS",
     "BuscarTicketArgs",
     "ConsultarProveedorArgs",
+    "ListarTicketsPorProveedorArgs",
     "MaxIterationsError",
     "StructuredOutputError",
     "TicketClassification",

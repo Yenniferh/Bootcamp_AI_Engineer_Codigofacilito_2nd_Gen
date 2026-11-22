@@ -34,7 +34,12 @@ async def test_tools_list_matches_specs_and_policies():
             listed = {tool.name: tool for tool in (await client.list_tools()).tools}
 
     assert set(listed) == {spec.name for spec in SPECS}
-    assert {"buscar_ticket", "consultar_proveedor", "actualizar_estado"} <= set(listed)
+    assert {
+        "buscar_ticket",
+        "consultar_proveedor",
+        "actualizar_estado",
+        "listar_tickets_por_proveedor",
+    } == set(listed)
     for spec in SPECS:
         tool = listed[spec.name]
         politica = POLITICAS[spec.name]

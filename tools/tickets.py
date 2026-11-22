@@ -13,7 +13,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from contracts.tool_schemas import ActualizarEstadoArgs, BuscarTicketArgs
+    from contracts.tool_schemas import (
+        ActualizarEstadoArgs,
+        BuscarTicketArgs,
+        ListarTicketsPorProveedorArgs,
+    )
 
 # Rutas fijas: nunca se construyen a partir de los argumentos del modelo.
 TICKETS_DB = Path(__file__).resolve().parents[1] / "data" / "tickets_db.json"
@@ -76,3 +80,30 @@ def actualizar_estado(args: ActualizarEstadoArgs) -> dict:
         estados[args.ticket_id] = args.estado
         _guardar_estados(estados)
     return {"id": args.ticket_id, "estado": args.estado, "cambio": cambio}
+
+
+def listar_tickets_por_proveedor(args: ListarTicketsPorProveedorArgs) -> dict:
+    """Lista los tickets de un proveedor. Devuelve entre 1 y 20 tickets según el valor de tope."""
+    from contracts.tool_schemas import tool_error  # Import local: tool_schemas importa este módulo.
+    from tools.proveedores import (
+        normalize_provider_name,
+    )  # Import local: proveedores tool define este helper
+
+    nombre = normalize_provider_name(args.nombre)
+    tickets_db = json.loads(TICKETS_DB.read_text(encoding="utf-8"))
+    tickets = [
+        ticket
+        for ticket in tickets_db
+        if ticket["proveedor"] and normalize_provider_name(ticket["proveedor"]) == nombre
+    ]
+
+    if not tickets:
+        return tool_error(
+            "negocio",
+            f"no existen tickets para el proveedor {args.nombre}",
+            sugerencia="Confirma el nombre del proveedor con el usuario antes de reintentar.",
+        )
+
+    DEFAULT_TOPE = 10
+    tope = args.tope or DEFAULT_TOPE
+    return {"proveedor": nombre, "tickets": tickets[:tope]}

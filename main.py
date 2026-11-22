@@ -26,6 +26,7 @@ from pydantic import ValidationError
 from contracts import (
     BUSCAR_TICKET,
     CONSULTAR_PROVEEDOR,
+    LISTAR_TICKETS_POR_PROVEEDOR,
     MaxIterationsError,
     StructuredOutputError,
     TicketClassification,
@@ -54,7 +55,7 @@ TICKETS_DB_PATH = DATA_DIR / "tickets_db.json"
 TOOL_LOG_PATH = Path(__file__).parent / "logs" / "tool_calls.jsonl"
 
 # Herramientas disponibles en el modo --tools.
-TOOLS = [BUSCAR_TICKET, CONSULTAR_PROVEEDOR]
+TOOLS = [BUSCAR_TICKET, CONSULTAR_PROVEEDOR, LISTAR_TICKETS_POR_PROVEEDOR]
 TOOL_RESULT_PREVIEW = 120  # Caracteres que se muestran de cada resultado en pantalla.
 
 GRAY = "\033[90m"

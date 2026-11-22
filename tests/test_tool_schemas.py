@@ -6,9 +6,16 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from contracts import BUSCAR_TICKET, CONSULTAR_PROVEEDOR, BuscarTicketArgs, ConsultarProveedorArgs
+from contracts import (
+    BUSCAR_TICKET,
+    CONSULTAR_PROVEEDOR,
+    LISTAR_TICKETS_POR_PROVEEDOR,
+    BuscarTicketArgs,
+    ConsultarProveedorArgs,
+    ListarTicketsPorProveedorArgs,
+)
 from tools.proveedores import consultar_proveedor
-from tools.tickets import buscar_ticket
+from tools.tickets import buscar_ticket, listar_tickets_por_proveedor
 
 ROOT = Path(__file__).resolve().parents[1]
 PROVEEDORES = json.loads((ROOT / "data" / "proveedores.json").read_text(encoding="utf-8"))
@@ -117,3 +124,27 @@ def test_t1042_supplier_sla_via_tools():
     proveedor = consultar_proveedor(ConsultarProveedorArgs(nombre=ticket["proveedor"]))
     assert proveedor["nombre"] == ticket["proveedor"]
     assert proveedor["sla_horas"] == 4
+
+
+def test_listar_tickets_por_proveedor_spec():
+    function = LISTAR_TICKETS_POR_PROVEEDOR.to_openai()["function"]
+    assert function["name"] == "listar_tickets_por_proveedor"
+    assert function["parameters"]["required"] == ["nombre"]  # Optional `tope` arg
+    assert {"exclusiveMinimum": 0, "maximum": 20, "type": "integer"} in function["parameters"][
+        "properties"
+    ]["tope"]["anyOf"]
+    assert {"type": "null"} in function["parameters"]["properties"]["tope"]["anyOf"]
+
+
+def test_listar_tickets_por_proveedor_not_found():
+    result = listar_tickets_por_proveedor(
+        ListarTicketsPorProveedorArgs(nombre="unknown provider", tope=5)
+    )
+    assert result["error"]["mensaje"] == "no existen tickets para el proveedor unknown provider"
+
+
+def test_listar_tickets_por_proveedor_return_tickets():
+    result = listar_tickets_por_proveedor(
+        ListarTicketsPorProveedorArgs(nombre="Transportes Sierra", tope=5)
+    )
+    assert len(result["tickets"]) == 3

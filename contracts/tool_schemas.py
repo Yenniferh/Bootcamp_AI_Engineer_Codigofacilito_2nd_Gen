@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 from contracts.structured_output import sanitize_schema
 from tools.proveedores import consultar_proveedor
-from tools.tickets import actualizar_estado, buscar_ticket
+from tools.tickets import actualizar_estado, buscar_ticket, listar_tickets_por_proveedor
 
 ErrorTipo = Literal["validacion", "negocio", "transitorio", "permanente", "permiso", "limite"]
 EstadoTicket = Literal["abierto", "en revisión", "esperando proveedor", "resuelto"]
@@ -73,6 +73,15 @@ class ConsultarProveedorArgs(BaseModel):
     )
 
 
+class ListarTicketsPorProveedorArgs(BaseModel):
+    nombre: str = Field(
+        min_length=2, description="Nombre del proveedor del cual desea conocer sus ticket"
+    )
+    tope: int | None = Field(
+        default=None, gt=0, le=20, description="Cantidad máxima de tickets a listar"
+    )
+
+
 BUSCAR_TICKET = ToolSpec(
     name="buscar_ticket",
     description=(
@@ -105,4 +114,16 @@ ACTUALIZAR_ESTADO = ToolSpec(
     ),
     args_model=ActualizarEstadoArgs,
     handler=actualizar_estado,
+)
+
+
+LISTAR_TICKETS_POR_PROVEEDOR = ToolSpec(
+    name="listar_tickets_por_proveedor",
+    description=(
+        "Devuelve el listado de tickets de un proveedor por su nombre "
+        "y un tope de tickets opcional de entre 1 y 20. Si no se provee, "
+        "el tope por defecto es 10. No adivines nombres de proveedores."
+    ),
+    args_model=ListarTicketsPorProveedorArgs,
+    handler=listar_tickets_por_proveedor,
 )
