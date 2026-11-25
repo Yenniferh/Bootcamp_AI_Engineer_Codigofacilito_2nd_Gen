@@ -34,7 +34,13 @@ async def test_tools_list_matches_specs_and_policies():
             listed = {tool.name: tool for tool in (await client.list_tools()).tools}
 
     assert set(listed) == {spec.name for spec in SPECS}
-    assert {"buscar_ticket", "consultar_proveedor", "actualizar_estado"} <= set(listed)
+    assert {
+        "buscar_ticket",
+        "consultar_proveedor",
+        "actualizar_estado",
+        "listar_tickets_por_proveedor",
+        "crear_ticket",
+    } == set(listed)
     for spec in SPECS:
         tool = listed[spec.name]
         politica = POLITICAS[spec.name]
@@ -85,3 +91,33 @@ def test_toolset_closes_even_with_exception(toolset_factory):
     with pytest.raises(RuntimeError), toolset:
         raise RuntimeError("falla dentro del with")
     assert not toolset._thread.is_alive()
+
+
+@pytest.mark.anyio
+async def test_create_ticket_schema_hides_idempotency_key():
+    async with Client(mcp) as client:
+        listed = {tool.name: tool for tool in (await client.list_tools()).tools}
+
+    tool = listed["crear_ticket"]
+
+    assert set(tool.input_schema["properties"]) == {
+        "asunto",
+        "descripcion",
+        "prioridad",
+    }
+    assert tool.annotations.read_only_hint is False
+    assert tool.annotations.idempotent_hint is True
+
+
+def test_stdio_read_role_cannot_create_ticket(toolset_factory):
+    with toolset_factory("lectura") as toolset:
+        result = toolset.call(
+            "crear_ticket",
+            {
+                "asunto": "Nuevo asunto",
+                "descripcion": "Nueva descripcion",
+                "prioridad": "alta",
+            },
+        )
+
+    assert result["error"]["tipo"] == "permiso"

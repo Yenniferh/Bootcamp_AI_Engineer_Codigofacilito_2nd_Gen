@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import time
+import uuid
 from collections import Counter
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
@@ -45,8 +46,10 @@ class ToolPolicy:
 POLITICAS: dict[str, ToolPolicy] = {
     "buscar_ticket": ToolPolicy("lectura", timeout_s=2),
     "actualizar_estado": ToolPolicy("escritura"),
+    "crear_ticket": ToolPolicy("escritura"),
     # Si la base no tiene consultar_proveedor, esta política simplemente no se usa.
     "consultar_proveedor": ToolPolicy("lectura", timeout_s=2),
+    "listar_tickets_por_proveedor": ToolPolicy("lectura", timeout_s=2),
 }
 ROLES: dict[Rol, set[Permiso]] = {"lectura": {"lectura"}, "operador": {"lectura", "escritura"}}
 
@@ -153,6 +156,8 @@ class ToolRunner:
 
         # 4 y 5. Ejecutar con timeout; reintentar solo transitorios idempotentes.
         intentos = 0
+        if name == "crear_ticket":
+            args._idempotency_key = uuid.uuid4().hex
         while True:
             intentos += 1
             try:
