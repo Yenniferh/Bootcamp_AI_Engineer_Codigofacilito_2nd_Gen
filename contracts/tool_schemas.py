@@ -6,14 +6,20 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, PrivateAttr
 
 from contracts.structured_output import sanitize_schema
 from tools.proveedores import consultar_proveedor
-from tools.tickets import actualizar_estado, buscar_ticket, listar_tickets_por_proveedor
+from tools.tickets import (
+    actualizar_estado,
+    buscar_ticket,
+    crear_ticket,
+    listar_tickets_por_proveedor,
+)
 
 ErrorTipo = Literal["validacion", "negocio", "transitorio", "permanente", "permiso", "limite"]
 EstadoTicket = Literal["abierto", "en revisión", "esperando proveedor", "resuelto"]
+PrioridadTicket = Literal["baja", "media", "alta"]
 
 
 def tool_error(
@@ -82,6 +88,14 @@ class ListarTicketsPorProveedorArgs(BaseModel):
     )
 
 
+class CrearTicketArgs(BaseModel):
+    asunto: str = Field(min_length=5, description="Asunto del ticket")
+    descripcion: str = Field(min_length=5, description="Descripción del ticket")
+    prioridad: PrioridadTicket
+
+    _idempotency_key: str | None = PrivateAttr(default=None)
+
+
 BUSCAR_TICKET = ToolSpec(
     name="buscar_ticket",
     description=(
@@ -126,4 +140,15 @@ LISTAR_TICKETS_POR_PROVEEDOR = ToolSpec(
     ),
     args_model=ListarTicketsPorProveedorArgs,
     handler=listar_tickets_por_proveedor,
+)
+
+
+CREAR_TICKET = ToolSpec(
+    name="crear_ticket",
+    description=(
+        "Crea un ticket por su asunto, descripcion y prioridad (alta, media o baja) "
+        "Úsala solo si el usuario pidió explícitamente la creación de un ticket. "
+    ),
+    args_model=CrearTicketArgs,
+    handler=crear_ticket,
 )

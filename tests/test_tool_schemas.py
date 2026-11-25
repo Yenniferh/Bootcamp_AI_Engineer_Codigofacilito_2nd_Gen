@@ -9,13 +9,15 @@ from pydantic import ValidationError
 from contracts import (
     BUSCAR_TICKET,
     CONSULTAR_PROVEEDOR,
+    CREAR_TICKET,
     LISTAR_TICKETS_POR_PROVEEDOR,
     BuscarTicketArgs,
     ConsultarProveedorArgs,
+    CrearTicketArgs,
     ListarTicketsPorProveedorArgs,
 )
 from tools.proveedores import consultar_proveedor
-from tools.tickets import buscar_ticket, listar_tickets_por_proveedor
+from tools.tickets import buscar_ticket, crear_ticket, listar_tickets_por_proveedor
 
 ROOT = Path(__file__).resolve().parents[1]
 PROVEEDORES = json.loads((ROOT / "data" / "proveedores.json").read_text(encoding="utf-8"))
@@ -148,3 +150,39 @@ def test_listar_tickets_por_proveedor_return_tickets():
         ListarTicketsPorProveedorArgs(nombre="Transportes Sierra", tope=5)
     )
     assert len(result["tickets"]) == 3
+
+
+def test_crear_tickets_spec():
+    function = CREAR_TICKET.to_openai()["function"]
+    assert function["name"] == "crear_ticket"
+    assert function["parameters"]["required"] == ["asunto", "descripcion", "prioridad"]
+
+
+def test_crear_tickets_reject_short_args():
+    # Short asunto
+    with pytest.raises(ValidationError):
+        CrearTicketArgs(asunto="Nada", descripcion="Todavía en curso", prioridad="baja")
+
+    # Short descripcion
+    with pytest.raises(ValidationError):
+        CrearTicketArgs(asunto="Servidor caído", descripcion="nada", prioridad="alta")
+
+
+def test_crear_tickets_reject_unformatted_priority():
+    with pytest.raises(ValidationError):
+        CrearTicketArgs(
+            asunto="Agendar mantenimiento programado de impresoras",
+            descripcion="Contactar a ImpreTec para agendar el mantenimiento semestral.",
+            prioridad="ninguna",
+        )
+
+
+def test_crear_ticket_requires_idempotency_key():
+    ticket_args = CrearTicketArgs(
+        asunto="Agendar mantenimiento programado de impresoras",
+        descripcion="Contactar a ImpreTec para agendar el mantenimiento semestral.",
+        prioridad="media",
+    )
+    result = crear_ticket(args=ticket_args)
+
+    assert result["error"]["mensaje"] == "algo ha fallado. No se pudo crear el ticket"

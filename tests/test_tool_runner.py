@@ -6,7 +6,7 @@ import threading
 from pydantic import BaseModel
 
 from agents.tools import POLITICAS, ToolPolicy, ToolRunner, TransientToolError
-from contracts.tool_schemas import ACTUALIZAR_ESTADO, BUSCAR_TICKET, ToolSpec
+from contracts.tool_schemas import ACTUALIZAR_ESTADO, BUSCAR_TICKET, CREAR_TICKET, ToolSpec
 from core.llm_client import ToolCall
 
 
@@ -114,6 +114,63 @@ def test_transient_idempotent_is_retried_until_success(fake_sleep):
         "tool_resultado": "ok",
         "tool_intentos": 3,
     }
+
+
+def test_ticket_creation_is_idempotent_on_retry(tmp_path, monkeypatch, fake_sleep):
+    from tools import tickets
+
+    path = tmp_path / "tickets_nuevos.json"
+    monkeypatch.setattr(tickets, "NUEVOS_TICKETS_DB", path)
+    monkeypatch.setattr(tickets, "ESTADOS_PATH", tmp_path / "tickets_estado.json")
+
+    keys = []
+    results = []
+
+    def flaky(args):
+        keys.append(args._idempotency_key)
+
+        result = tickets.crear_ticket(args)
+        results.append(result)
+
+        if len(keys) == 1:
+            raise TransientToolError("Respuesta perdida")
+
+        return result
+
+    tool = ToolSpec(
+        name=CREAR_TICKET.name,
+        description=CREAR_TICKET.description,
+        args_model=CREAR_TICKET.args_model,
+        handler=flaky,
+    )
+
+    runner = ToolRunner([tool], sleep=fake_sleep)
+
+    result = run(
+        runner,
+        "crear_ticket",
+        json.dumps(
+            {
+                "asunto": "Nuevo asunto",
+                "descripcion": "Nueva descripcion",
+                "prioridad": "baja",
+            }
+        ),
+    )
+
+    assert "error" not in result
+    assert len(keys) == 2
+    assert keys[0]
+    assert keys[0] == keys[1]
+    assert results[0] == results[1] == result
+
+    persisted = json.loads(path.read_text(encoding="utf-8"))
+
+    assert len(persisted) == 1
+    assert persisted[0]["id"] == result["id"]
+    assert persisted[0]["_idempotency_key"] == keys[0]
+    assert fake_sleep.waits == [0.5]
+    assert runner.eventos[-1]["tool_intentos"] == 2
 
 
 def test_transient_not_idempotent_is_not_retried(fake_sleep):

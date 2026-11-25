@@ -33,6 +33,8 @@ if hasattr(
     schemas, "LISTAR_TICKETS_POR_PROVEEDOR"
 ):  # Solo si la base ya tiene la actividad guiada de la Clase 5.
     SPECS.append(schemas.LISTAR_TICKETS_POR_PROVEEDOR)
+if hasattr(schemas, "CREAR_TICKET"):  # Solo si la base ya tiene el reto de la Clase 5.
+    SPECS.append(schemas.CREAR_TICKET)
 
 runner = ToolRunner(SPECS, rol=os.environ.get("OPERADOR_ROL", "lectura"))
 mcp = MCPServer("agente-operador")
@@ -74,11 +76,16 @@ def listar_tickets_por_proveedor(nombre: str, tope: int | None) -> dict[str, Any
     return _call("listar_tickets_por_proveedor", nombre=nombre, tope=tope)
 
 
+def crear_ticket(asunto: str, descripcion: str, prioridad: str) -> dict[str, Any]:
+    return _call("crear_ticket", asunto=asunto, descripcion=descripcion, prioridad=prioridad)
+
+
 FUNCTIONS: dict[str, Callable[..., dict[str, Any]]] = {
     "buscar_ticket": buscar_ticket,
     "actualizar_estado": actualizar_estado,
     "consultar_proveedor": consultar_proveedor,
     "listar_tickets_por_proveedor": listar_tickets_por_proveedor,
+    "crear_ticket": crear_ticket,
 }
 
 for spec in SPECS:
@@ -92,5 +99,3 @@ for spec in SPECS:
 
 if __name__ == "__main__":
     mcp.run()
-
-# TODO(clase-5): práctica guiada. Expón listar_tickets_por_proveedor con readOnlyHint.
