@@ -12,7 +12,7 @@ Este directorio registra la evolución del proyecto, diferenciando el código ba
 | 02 | Prompt & Context Engineering | Completed | [Class 02](classes/class-02.md) |
 | 03 | Structured Outputs & Tools | Completed | [Class 03](classes/class-03.md) |
 | 04 | AI Agents — ReAct & Plan-and-Execute | Completed | [Class 04](classes/class-04.md) |
-| 05 | Tools, Actions & MCP | In Progress | [Class 05](classes/class-05.md) |
+| 05 | Tools, Actions & MCP | Completed | [Class 05](classes/class-05.md) |
 
 Las clases siguientes se incorporarán a este índice conforme avance el bootcamp.
 

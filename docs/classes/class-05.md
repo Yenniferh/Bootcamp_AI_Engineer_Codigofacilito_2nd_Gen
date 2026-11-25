@@ -2,254 +2,170 @@
 
 ## Overview
 
-Class 05 introduces the design and execution of tools with explicit policies, permission controls, structured errors, and integration through the Model Context Protocol (MCP).
-
-The Agente Operador extends its existing tool-calling capabilities with a `ToolRunner` responsible for validating requests, enforcing execution policies, and controlling access to read and write operations.
-
-The class also introduces an MCP server and client, allowing the agent to discover and execute tools through a standardized protocol rather than relying exclusively on local tool registration.
+Class 05 introduces tool execution policies, structured errors, idempotent actions, and integration through the Model Context Protocol (MCP). The Agente Operador extends its tool-calling capabilities with a controlled execution layer and a client/server architecture.
 
 ### Concepts
 
 - Tool contracts and argument validation.
 - Structured tool errors and error classification.
-- Idempotent operations and safe retries.
-- Tool execution policies and role-based permissions.
-- Timeouts, retry limits, and execution logging.
-- MCP architecture: host, client, and server.
-- MCP tools, schemas, and annotations.
-- Communication through the stdio transport.
+- Idempotency, persistence, and safe retries.
+- Role-based permissions, timeouts, and call limits.
+- MCP host, client, server, tool discovery, schemas, and annotations.
+- Communication through stdio.
 
 ## Starter Code
 
-**Upstream commit:** [`3cdaecd`](https://github.com/RamsesCamas/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/commit/3cdaecd27578a170b370f7a6e41cb5a68ca229d3) + [`5728d7c`](https://github.com/RamsesCamas/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/commit/5728d7c6e0c494ee180fb57da4c8a29aa65069cc)
+**Upstream commits:** [`3cdaecd`](https://github.com/RamsesCamas/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/commit/3cdaecd27578a170b370f7a6e41cb5a68ca229d3) + [`5728d7c`](https://github.com/RamsesCamas/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/commit/5728d7c6e0c494ee180fb57da4c8a29aa65069cc)
 
 **Starter branch:** `chore/class-05-starter`
 
-**Starter PR:** [PR #11 - Class 05 starter components](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/11)
+**Starter PR:** [#11](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/11)
 
-The Class 05 starter was selectively integrated from the instructor's repository while preserving the personal implementations developed in previous classes.
-
-The integration introduces tool execution policies, role-based permissions, MCP communication, and additional agent capabilities.
+The starter was selectively integrated from upstream while preserving personal implementations from previous classes.
 
 ### Components
 
 | Component | Responsibility |
 |---|---|
-| `agents/tools.py` | Tool execution policies, permissions, timeouts, retries, and logging. |
+| `agents/tools.py` | Tool policies, permissions, timeouts, retries, and logging. |
 | `contracts/tool_schemas.py` | Tool specifications, argument contracts, and structured errors. |
 | `tools/tickets.py` | Ticket retrieval and state updates. |
 | `operador_mcp/server.py` | MCP server exposing tools through stdio. |
-| `operador_mcp/client.py` | MCP client that discovers and invokes remote tools. |
+| `operador_mcp/client.py` | MCP tool discovery and invocation. |
 | `main.py` | CLI integration for MCP and role selection. |
-| `agents/react_agent.py` | Integration with the tool execution layer. |
-| `agents/planner.py` | Integration with the tool execution layer. |
-| `agents/verifier.py` | Instructor-provided response verifier from the previous class challenge. |
-| `prompts/verifier/` | Prompt for checking responses against trace observations. |
-| `prompts/reviser/` | Prompt for revising responses that fail verification. |
-| `tests/test_tool_runner.py` | Tests for tool execution policies. |
-| `tests/test_mcp.py` | Tests for MCP integration. |
-| `tests/test_actualizar_estado.py` | Tests for ticket state updates. |
+| `agents/react_agent.py`, `agents/planner.py` | Integration with the tool execution layer. |
+| `agents/verifier.py`, `prompts/verifier/`, `prompts/reviser/` | Instructor-provided solution to the Class 04 challenge. |
+| `tests/test_tool_runner.py`, `tests/test_mcp.py`, `tests/test_actualizar_estado.py` | Execution policy, MCP, and state-update tests. |
 
 ### ToolRunner
 
-`ToolRunner` provides a controlled execution layer between the agent and the tool handlers.
-
-Each tool can define a `ToolPolicy` containing:
-
-- Permission level: `lectura`, `escritura`, or `peligrosa`.
-- Execution timeout.
-- Idempotency configuration.
-- Maximum number of calls per execution.
-
-The execution layer validates permissions, call limits, and arguments before invoking a handler.
-
-Transient failures may be retried when the operation is idempotent.
-
-Tools without an explicit policy are treated as dangerous and denied by default.
+`ToolRunner` validates permissions, call limits, and arguments before executing handlers with a timeout. Transient failures may be retried for idempotent tools. `ToolPolicy` defines permission level (`lectura`, `escritura`, or `peligrosa`), timeout, idempotency, and maximum calls. Tools without explicit policies are denied by default.
 
 ### Structured Tool Errors
-
-The starter introduces a standardized error structure through `tool_error()`.
 
 | Error Type | Meaning |
 |---|---|
 | `validacion` | Invalid arguments or unknown tool. |
 | `negocio` | Business rule violation or unavailable entity. |
-| `transitorio` | Temporary failure that may permit retrying. |
+| `transitorio` | Temporary failure. |
 | `permanente` | Unexpected execution failure. |
-| `permiso` | Operation not permitted for the current role. |
-| `limite` | Maximum number of calls exceeded. |
-
-Structured errors allow the agent to interpret failures without exposing internal tracebacks.
+| `permiso` | Operation not permitted for the role. |
+| `limite` | Maximum calls exceeded. |
 
 ### Idempotent State Updates
 
-The starter introduces `actualizar_estado`, a tool that sets a ticket's state.
-
-Repeated requests to set the same state do not create additional changes.
-
-Updates are stored in `var/tickets_estado.json`, while the original `data/tickets_db.json` remains unchanged.
+`actualizar_estado` sets a ticket state rather than toggling it. Updates are stored in `var/tickets_estado.json`, leaving the original dataset unchanged.
 
 ### MCP Integration
 
-The project implements an MCP server and client using the Python MCP SDK.
-
-The server exposes tools through stdio, and the client discovers them dynamically through the MCP protocol.
-
-The MCP server delegates tool execution to `ToolRunner`, preserving permission checks, argument validation, and execution policies.
-
-Tool annotations describe properties such as read-only behavior, destructive operations, and idempotency.
+The Python MCP client launches the server through stdio, discovers tools dynamically, and invokes them through the protocol. The server delegates execution to `ToolRunner`. MCP annotations describe tool behavior; permission enforcement remains the runner's responsibility.
 
 ### Instructor-Provided Verifier
 
-The starter also includes the instructor's solution to the Class 04 independent challenge.
-
-This includes:
-
-- The `Verificacion` Pydantic contract.
-- Verification against the agent's trace observations.
-- A single revision when verification fails.
-- The verifier and reviser prompts.
-
-These components were incorporated from upstream and are not recorded as a personal implementation of the Class 04 challenge.
+The Class 04 verifier challenge solution was incorporated from upstream, including the `Verificacion` contract, verification against trace observations, and at most one revision. It is not a personal implementation of the Class 04 challenge.
 
 ## Activity
 
-Class 05 includes a guided practice and an independent challenge.
-
 ### Guided Practice: List Tickets by Provider
 
-The guided practice focuses on extending the agent with a read-only tool that retrieves tickets associated with a provider.
-
-#### Requirements
-
-1. Implement `listar_tickets_por_proveedor` in `tools/tickets.py`.
-2. Return at most 10 tickets, including their IDs, subjects, and states, along with the total number of matching tickets.
-3. Create `ListarTicketsPorProveedorArgs` and `LISTAR_TICKETS_POR_PROVEEDOR` in `contracts/tool_schemas.py`.
-4. Register the tool with a read-only `ToolPolicy`.
-5. Expose the tool through the MCP server with `readOnlyHint`.
-6. Validate its behavior without an LLM and subsequently through the agent.
-
-#### Expected Behavior
-
-```bash
-uv run main.py --agent react --mcp "¿Qué tickets tiene PagosRed?"
-```
-
-The agent should retrieve tickets associated with the specified provider through MCP.
+Implement `listar_tickets_por_proveedor`, a read-only tool that returns up to 10 tickets with their IDs, subjects, states, and total matching count. Define its argument contract, register its policy, expose it through MCP with `readOnlyHint`, and validate it without and with an LLM.
 
 ### Independent Challenge: Idempotent Ticket Creation
 
-The independent challenge is to implement `crear_ticket`, a write operation exposed through MCP.
-
-#### Requirements
-
-1. Create `CrearTicketArgs` with `asunto`, `descripcion`, and `prioridad`.
-2. Generate an `idempotency_key` in application code, rather than requesting it from the model.
-3. Register the tool with a write policy and idempotent behavior.
-4. Expose the tool through MCP with the appropriate annotations.
-5. Verify that repeated calls with the same request identity do not create duplicate tickets.
-
-#### Expected Behavior
-
-Two equivalent requests using the same `request_id` should result in a single persisted ticket.
-
-The tool should support safe retries without producing duplicate records.
+Implement `crear_ticket` with `CrearTicketArgs(asunto, descripcion, prioridad)`, an application-generated idempotency key, an idempotent write policy, and MCP exposure. The reference requirements call for a stable request-derived key and a test demonstrating that repeated calls with the same key create only one ticket.
 
 ## Personal Implementation
 
 **Branch:** `feat/class-05`
 
-**Status:** Pending
+**Status:** Both activities implemented; integration pending.
 
-### Guided Practice
+**Activity PR:** [#12 - Add tools listar tickets por proveedor and crear ticket](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/12)
 
-Pending implementation.
+### Guided Practice: Provider Ticket Listing
 
-### Independent Challenge
+Implemented `ListarTicketsPorProveedorArgs`, `LISTAR_TICKETS_POR_PROVEEDOR`, and `listar_tickets_por_proveedor()`. The handler reuses `normalize_provider_name()` from Class 03 to match provider names against the original ticket dataset. It returns a structured business error when no matching tickets exist.
 
-Pending implementation.
+The optional `tope` argument defaults to 10 in the handler and accepts values from 1 to 20. The result contains the normalized provider name and matching ticket records up to that limit. The tool is registered with a read-only policy and a two-second timeout, and exposed through MCP.
 
-Implementation details, design decisions, and related pull requests will be documented after completing each activity.
+### Independent Challenge: Ticket Creation
+
+Implemented `CrearTicketArgs`, `CREAR_TICKET`, and `crear_ticket()`. The public argument contract validates subject and description (minimum five characters each) and priority (`baja`, `media`, or `alta`). The idempotency key is stored in a Pydantic `PrivateAttr`, keeping it outside the model-facing schema.
+
+#### Idempotency and Retry Flow
+
+1. `ToolRunner` validates the arguments and generates a UUID using `uuid.uuid4().hex` before entering its retry loop.
+2. The key is assigned to `args._idempotency_key` and reused across retries of that execution.
+3. The handler checks persisted tickets for the key before creating a record.
+4. If the key already exists, the handler returns the existing ticket instead of creating another.
+5. If no key is supplied, the handler returns a permanent error without writing a ticket.
+
+This design protects against duplicate creation when a transient failure occurs after persistence but before the response reaches the runner. The key is generated by application code, not the LLM.
+
+#### Persistence and Integration
+
+New tickets are stored in `var/tickets_nuevos.json` with their internal idempotency keys. IDs are assigned by incrementing the highest existing numeric ticket ID across both sources. New records start in `abierto` with an empty history and no assigned team or provider.
+
+Writes use a temporary file and `os.replace()` to avoid partially written JSON. `buscar_ticket` and `actualizar_estado` now access both the original dataset and newly persisted tickets. State overlays remain separate.
+
+Both new tools are registered in the CLI and exposed by the MCP server. `crear_ticket` uses a write policy with idempotency enabled by default, and its description requires an explicit user request to create a ticket.
 
 ## Validation & Results
 
-**Status:** Starter validation completed partially; activity validation pending.
+### Automated Tests
 
-### Project Checks
+| Test file | Coverage added |
+|---|---|
+| `tests/test_crear_ticket.py` | Persistence, same-key deduplication, different keys, missing key, retrieval of new and existing tickets. |
+| `tests/test_tool_runner.py` | Simulated lost response after persistence; retry reuses the key, returns the same ticket, and leaves one persisted record. |
+| `tests/test_tool_schemas.py` | Tool schemas, provider listing and not-found behavior, subject/description length, priority validation, missing key. |
+| `tests/test_mcp.py` | Discovery of both new tools, policy annotations, private key excluded from the public schema, and rejection of creation by the read-only role. |
+
+Persistence tests use temporary paths and `monkeypatch` to avoid modifying the real runtime data. The retry test asserts two attempts, identical keys and results, one persisted ticket, and the expected backoff.
+
+### Validation Commands
 
 ```bash
+uv run pytest tests/test_crear_ticket.py tests/test_tool_runner.py tests/test_tool_schemas.py tests/test_mcp.py -q
 just check
 ```
 
-### Local Agent
+Manual validation commands:
 
 ```bash
-uv run main.py --agent react "¿Cómo va el T-1042?"
+uv run main.py --agent react --mcp "¿Qué tickets tiene PagosRed?"
+uv run main.py --agent react --mcp --rol operador "Crea un ticket por caída del portal de pagos con prioridad alta"
 ```
 
-### MCP Agent
-
-```bash
-uv run main.py --agent react --mcp "¿Cómo va el T-1042?"
-```
-
-### MCP Server
-
-```bash
-uv run python -m operador_mcp.server
-```
-
-The server communicates through stdio and is normally launched automatically by the MCP client.
-
-### MCP Inspector
+The second command writes runtime data if the agent executes the creation tool. MCP Inspector can also be launched with:
 
 ```bash
 npx @modelcontextprotocol/inspector uv run python -m operador_mcp.server
 ```
 
-The Inspector requires Node.js and npm in the development environment.
-
-### Initial MCP Validation
-
-The following behavior was observed during manual testing:
-
-- MCP tool discovery succeeded.
-- Direct tool invocation through `MCPToolset` returned the expected ticket information.
-- The agent produced a correct response using the MCP-enabled execution path.
-- The MCP connection could be opened and closed without error when no tool was invoked.
+The Inspector requires Node.js and npm; the Python server itself does not.
 
 ### Known Issue: JSON-RPC Warning During Shutdown
 
-During manual testing, the following warning was observed:
+During starter validation, tool discovery and direct MCP invocation succeeded, but `Failed to parse JSONRPC message from server` appeared when closing a connection after a tool call. Closing without invoking a tool did not reproduce the warning. The cause remains unconfirmed; no changes were made solely to suppress it. This was considered non-blocking for the starter. Its status after the activity has not been independently revalidated.
 
-```text
-Failed to parse JSONRPC message from server
-```
+### Limitations and Differences from the Reference Requirements
 
-The warning occurred when closing an MCP connection after a successful tool invocation.
+- The UUID is stable within one runner execution and its internal retries, not across separate tool invocations. A caller-provided `request_id` and deterministic request-derived key are not implemented; repeated independent calls may create duplicates.
+- The listing tool returns full original dataset records and omits the total matching count. Its maximum is 20 rather than the reference limit of 10, and it does not apply state overlays to listed records.
+- The MCP listing wrapper accepts nullable `tope` but has no Python default, so omission may not behave as it does in the local argument contract.
+- Ticket IDs increment from the highest existing ID rather than explicitly starting in the `T-2xxx` range.
+- Atomic file replacement prevents partial writes but does not guarantee concurrency-safe ID allocation or deduplication across simultaneous requests.
+- The legacy `--tools` execution path does not inject the private key through `ToolRunner`; ticket creation is intended for the runner-backed agent/MCP path.
 
-Additional testing showed that:
-
-- Tool discovery completed successfully.
-- Tool execution returned the expected result.
-- The warning did not appear while the connection remained open.
-- Closing a connection without invoking a tool did not reproduce the warning.
-
-The underlying cause has not been identified.
-
-Because tool discovery and execution were functional, the issue was considered non-blocking for the starter integration. No changes were made to the MCP implementation solely to suppress the warning.
-
-### Activity Results
-
-Pending completion of the guided practice and independent challenge.
+The automated coverage above is based on the PR diff. Test execution results, CI status, and manual end-to-end activity results have not been independently verified.
 
 ## Milestone
 
-**Tag:** `class-05` - Pending
+**Tag:** `class-05` — Pending merge
 
 **Starter PR:** [#11](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/11)
 
-**Activity PR:** Pending
+**Activity PR:** [#12](https://github.com/Yenniferh/Bootcamp_AI_Engineer_Codigofacilito_2nd_Gen/pull/12)
 
-The `class-05` tag will be created after integrating the completed Class 05 activities into `develop`.
+Both activities have been implemented in `feat/class-05`. The milestone tag will be created after the activity PR is integrated into `develop`.
