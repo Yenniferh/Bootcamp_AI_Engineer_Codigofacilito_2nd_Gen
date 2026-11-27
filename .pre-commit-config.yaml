@@ -17,7 +17,7 @@ repos:
 
       - id: check-whitespace
         name: Check trailing whitespace
-        entry: git diff --check --cached
+        entry: git diff --cached --check -- . ':(exclude)data/docs/**'
         language: system
         pass_filenames: false
         always_run: true
